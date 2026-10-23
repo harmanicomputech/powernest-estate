@@ -17,7 +17,8 @@ mkdir -p "$WORK/src"
 git -C "$ROOT" archive HEAD | tar -x -C "$WORK/src"
 
 cd "$WORK/src"
-composer install --no-dev --optimize-autoloader --no-interaction --no-progress --quiet
+composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress --quiet
+find vendor -type d -name .git -prune -exec rm -rf {} +
 npm ci --no-audit --no-fund --silent
 npm run build --silent
 
