@@ -107,6 +107,17 @@
         display: none !important;
     }
 
+    /* A bare .grid gets one shrinkable column instead of an auto column that grows to fit
+       long content (tokens, references) and overflows small screens. grid-cols-* utilities win. */
+    .grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    html,
+    body {
+        overflow-x: clip;
+    }
+
     ::selection {
         background: var(--color-brand-200);
     }

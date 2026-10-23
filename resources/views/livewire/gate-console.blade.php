@@ -9,7 +9,7 @@
                 <label for="gate-code" class="sr-only">Access code</label>
                 <input id="gate-code" wire:model="code" type="text" inputmode="numeric" autocomplete="off" placeholder="Enter 6-digit code" class="control h-13 flex-1 text-center font-mono text-xl font-bold tracking-[0.3em] tnum placeholder:font-sans placeholder:text-base placeholder:font-medium placeholder:tracking-normal">
                 <x-ui.button size="lg" class="h-13" wire:loading.attr="disabled" wire:target="check,scanned">
-                    <x-icon name="loader" class="size-5 animate-spin" wire:loading wire:target="check,scanned" />
+                    <span wire:loading wire:target="check,scanned"><x-icon name="loader" class="size-5 animate-spin" /></span>
                     <span wire:loading.remove wire:target="check,scanned">Verify</span>
                 </x-ui.button>
             </form>
