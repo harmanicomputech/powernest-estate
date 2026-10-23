@@ -4,6 +4,7 @@ namespace Tests\Feature\Operations;
 
 use App\Enums\BookingStatus;
 use App\Enums\EstateRole;
+use App\Enums\InvoiceStatus;
 use App\Enums\MaintenanceStatus;
 use App\Enums\Priority;
 use App\Models\Facility;
@@ -101,5 +102,27 @@ class MaintenanceAndBookingTest extends TestCase
 
         $this->expectException(ValidationException::class);
         $service->book($bob, $court, $day->copy()->setTime(20, 30)->utc(), $day->copy()->setTime(22, 0)->utc(), 2, null);
+    }
+
+    public function test_booking_fee_is_invoiced_on_approval_and_voided_on_cancel(): void
+    {
+        $estate = $this->estate();
+        [$resident, $property] = $this->resident($estate);
+        $facilityManager = $this->staff($estate, EstateRole::FacilityManager);
+        $hall = Facility::create(['estate_id' => $estate->id, 'name' => 'Hall', 'requires_approval' => true, 'fee' => 2_500_000, 'opens_at' => '08:00', 'closes_at' => '22:00', 'max_duration_minutes' => 360]);
+        $day = Carbon::now('Africa/Lagos')->addDays(5)->setTime(14, 0);
+
+        $booking = app(BookingService::class)->book($resident, $hall, $day->copy()->utc(), $day->copy()->addHours(3)->utc(), 30, 'Party');
+        $this->assertNull($booking->invoice_id);
+
+        $this->inEstate($facilityManager, $estate)->post(route('manage.bookings.review', $booking), ['decision' => 'approve'])->assertRedirect();
+        $invoice = $booking->fresh()->invoice;
+        $this->assertNotNull($invoice);
+        $this->assertSame(2_500_000, $invoice->total);
+        $this->assertSame($property->id, $invoice->property_id);
+
+        $this->inEstate($resident, $estate)->get(route('facilities.bookings.index'))->assertSee('Pay');
+        $this->inEstate($resident, $estate)->post(route('bookings.cancel', $booking))->assertRedirect();
+        $this->assertSame(InvoiceStatus::Void, $invoice->fresh()->status);
     }
 }

@@ -3,6 +3,9 @@
         <x-ui.button type="button" variant="secondary" icon="download" onclick="window.print()">Print</x-ui.button>
     </x-ui.page-header>
     <div class="mx-auto max-w-lg">
+        @if ($payment->status === \App\Enums\PaymentStatus::Reversed)
+            <x-ui.alert tone="danger" title="This payment was reversed" class="mb-4">{{ local_time($payment->reversed_at) }} by {{ $payment->reverser?->name }}: {{ $payment->reversal_reason }}</x-ui.alert>
+        @endif
         <div class="card overflow-hidden">
             <div class="flex items-center justify-between border-b border-line p-6">
                 <x-brand.logo />
@@ -29,5 +32,15 @@
                 ]" />
             </div>
         </div>
+        @can('billing.approve')
+            @if ($payment->status === \App\Enums\PaymentStatus::Succeeded)
+                <div class="mt-4 print:hidden">
+                    <x-ui.confirm :action="route('manage.billing.payments.reverse', $payment)" title="Reverse this payment?" message="Use for bounced transfers, chargebacks or refunds paid outside PowerNest. The invoice becomes payable again and the ledger records the reversal." confirm="Reverse payment" confirm-variant="danger" variant="danger-soft" class="w-full" icon="refresh-cw">
+                        Reverse payment
+                        <x-slot:fields><x-ui.input name="reason" label="Reason" required /></x-slot:fields>
+                    </x-ui.confirm>
+                </div>
+            @endif
+        @endcan
     </div>
 </x-layouts.app>

@@ -163,4 +163,27 @@ class BillingTest extends TestCase
         $this->expectException(\LogicException::class);
         LedgerEntry::first()->update(['debit' => 0]);
     }
+
+    public function test_payment_reversal_reopens_invoice_and_offsets_ledger(): void
+    {
+        $estate = $this->estate();
+        $finance = $this->staff($estate, EstateRole::FinanceOfficer);
+        [$resident, $property] = $this->resident($estate);
+        $billing = app(BillingService::class);
+        $invoice = $billing->issueInvoice($estate, $property, [['description' => 'Levy', 'quantity' => 1, 'unit_amount' => 500_000]], 'Levy', now()->addWeek(), $finance);
+        $payment = $billing->recordManualPayment($invoice, 500_000, 'bank_transfer', 'TRF-9', now(), $finance);
+        $this->assertSame(0, $billing->propertyBalance($property));
+
+        $this->inEstate($resident, $estate)->post(route('manage.billing.payments.reverse', $payment), ['reason' => 'x'])->assertForbidden();
+        $this->inEstate($finance, $estate)->post(route('manage.billing.payments.reverse', $payment), ['reason' => 'Transfer bounced'])->assertRedirect();
+
+        $this->assertSame(PaymentStatus::Reversed, $payment->fresh()->status);
+        $this->assertSame(InvoiceStatus::Issued, $invoice->fresh()->status);
+        $this->assertSame(500_000, $billing->propertyBalance($property));
+        $this->assertDatabaseHas('ledger_entries', ['entry_type' => 'payment_reversed', 'debit' => 500_000]);
+
+        // A reversal cannot be applied twice.
+        $this->inEstate($finance, $estate)->post(route('manage.billing.payments.reverse', $payment), ['reason' => 'again'])->assertSessionHasErrors('payment');
+        $this->inEstate($resident, $estate)->get(route('bills.receipt', $payment))->assertOk()->assertSee('This payment was reversed');
+    }
 }

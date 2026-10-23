@@ -24,6 +24,7 @@ use App\Models\Expense;
 use App\Models\Facility;
 use App\Models\Gate;
 use App\Models\Invoice;
+use App\Models\LostFoundItem;
 use App\Models\Meter;
 use App\Models\Occupancy;
 use App\Models\PowerPurchase;
@@ -37,6 +38,7 @@ use App\Models\Visit;
 use App\Services\Billing\BillingService;
 use App\Services\Estate\OccupancyService;
 use App\Services\Operations\IncidentService;
+use App\Services\Operations\InspectionService;
 use App\Services\Operations\MaintenanceService;
 use App\Services\Visitors\GateService;
 use App\Services\Visitors\PassService;
@@ -407,6 +409,10 @@ class DemoSeeder extends Seeder
         foreach ([['Estate generator (500kVA)', 'generator', 'Power house', 30, 26], ['Borehole pump', 'borehole', 'Water works', 90, 80], ['Main gate barrier', 'gate', 'Main Gate', 60, 10], ['Transformer T1', 'transformer', 'Substation', 180, 175]] as [$name, $category, $location, $interval, $ago]) {
             Asset::create(['estate_id' => $this->estate->id, 'name' => $name, 'category' => $category, 'location' => $location, 'service_interval_days' => $interval, 'last_serviced_on' => now()->subDays($ago)->toDateString(), 'next_service_due_on' => now()->subDays($ago)->addDays($interval)->toDateString()]);
         }
+
+        app(InspectionService::class)->createTemplate($this->estate, $this->staff['supervisor'], 'Nightly perimeter patrol', 'security', ['Perimeter lights working', 'Fence and wall intact', 'Main gate barrier operational', 'CCTV monitors on', 'Guard post logbook updated']);
+        app(InspectionService::class)->createTemplate($this->estate, $this->staff['facility'], 'Monthly fire safety check', 'fire_safety', ['Extinguishers in date', 'Fire exits unobstructed', 'Alarm test completed', 'Generator house clear of fuel spills']);
+        LostFoundItem::create(['estate_id' => $this->estate->id, 'type' => 'found', 'title' => 'Set of car keys (Toyota)', 'location' => 'Tennis court bench', 'status' => 'open', 'reported_by' => $this->staff['guard']->id]);
 
         StaffTask::create(['estate_id' => $this->estate->id, 'title' => 'Inspect perimeter fence lighting', 'assigned_to' => $tech->id, 'created_by' => $facility->id, 'priority' => Priority::Normal, 'status' => TaskStatus::Open, 'due_at' => now()->addDay()]);
         StaffTask::create(['estate_id' => $this->estate->id, 'title' => 'Night patrol log review', 'assigned_to' => $this->staff['guard']->id, 'created_by' => $this->staff['supervisor']->id, 'priority' => Priority::High, 'status' => TaskStatus::InProgress, 'due_at' => now()->addHours(6)]);

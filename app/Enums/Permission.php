@@ -22,6 +22,7 @@ enum Permission: string
 
     case IncidentsReport = 'incidents.report';
     case IncidentsManage = 'incidents.manage';
+    case InspectionsPerform = 'inspections.perform';
 
     case PowerPurchase = 'power.purchase';
     case PowerViewAll = 'power.view_all';

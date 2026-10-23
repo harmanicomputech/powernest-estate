@@ -24,6 +24,14 @@
                         </div>
                     @endforeach
                 </div>
+                @if ($property->documents->isNotEmpty())
+                    <div class="border-t border-line">
+                        <p class="eyebrow px-5 pb-1 pt-4 sm:px-6">Documents</p>
+                        @foreach ($property->documents as $doc)
+                            <a href="{{ route('documents.show', $doc) }}" target="_blank" class="flex items-center gap-3 px-5 py-2.5 text-sm font-semibold hover:bg-canvas sm:px-6"><x-icon name="file-text" class="size-4 text-muted" />{{ $doc->original_name }}</a>
+                        @endforeach
+                    </div>
+                @endif
                 @if ($isPrimary)
                     <div class="border-t border-line p-5 sm:p-6" x-data="{ open: false }">
                         <button type="button" x-on:click="open = !open" class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700"><x-icon name="user-plus" class="size-4" />Add household member</button>

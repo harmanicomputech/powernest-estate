@@ -114,6 +114,14 @@ class BillingController extends Controller
         return back()->with('success', "Payment {$payment->reference} recorded.");
     }
 
+    public function reversePayment(Payment $payment, Request $request): RedirectResponse
+    {
+        $data = $request->validate(['reason' => ['required', 'string', 'max:250']]);
+        $this->billing->reversePayment($payment, $request->user(), $data['reason']);
+
+        return back()->with('success', "Payment {$payment->reference} reversed. The invoice is open again.");
+    }
+
     public function requestAdjustment(Invoice $invoice, Request $request): RedirectResponse
     {
         $data = $request->validate(['type' => ['required', Rule::in(['discount', 'waiver'])], 'amount' => ['required', 'string', 'max:15'], 'reason' => ['required', 'string', 'max:250']]);

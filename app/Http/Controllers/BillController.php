@@ -90,8 +90,8 @@ class BillController extends Controller
     public function receipt(Payment $payment): View
     {
         Gate::authorize('view', $payment);
-        abort_unless($payment->status === PaymentStatus::Succeeded, 404);
+        abort_unless(in_array($payment->status, [PaymentStatus::Succeeded, PaymentStatus::Reversed], true), 404);
 
-        return view('bills.receipt', ['payment' => $payment->load('invoice', 'property', 'payer', 'allocations.invoice')]);
+        return view('bills.receipt', ['payment' => $payment->load('invoice', 'property', 'payer', 'allocations.invoice', 'reverser')]);
     }
 }

@@ -24,7 +24,7 @@ class HouseholdController extends Controller
         $estate = $this->context->estate();
 
         $occupancies = Occupancy::forEstate($estate)->where('user_id', $user->id)->where('status', 'active')
-            ->with(['property.building', 'property.occupancies' => fn ($q) => $q->where('status', 'active')->with('user')])
+            ->with(['property.building', 'property.documents' => fn ($q) => $q->where('category', 'property_shared'), 'property.occupancies' => fn ($q) => $q->where('status', 'active')->with('user')])
             ->get();
 
         return view('household.index', [

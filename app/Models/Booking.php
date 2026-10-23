@@ -24,6 +24,11 @@ class Booking extends Model
         ];
     }
 
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
+    }
+
     public function facility(): BelongsTo
     {
         return $this->belongsTo(Facility::class);

@@ -20,6 +20,18 @@ return [
     | Monetary values are in kobo (minor units).
     */
     'estate_defaults' => [
+        /*
+    | Retention (months) for operational personal data, pruned daily by model:prune.
+    | Financial records, ledger, audit log and incidents are never pruned automatically.
+    | Confirm periods with the estate's data protection officer (NDPA 2023).
+    */
+        'retention' => [
+            'visits_months' => (int) env('RETENTION_VISITS_MONTHS', 12),
+            'pass_scans_months' => (int) env('RETENTION_PASS_SCANS_MONTHS', 6),
+            'visitor_passes_months' => (int) env('RETENTION_VISITOR_PASSES_MONTHS', 12),
+            'webhook_events_months' => (int) env('RETENTION_WEBHOOK_EVENTS_MONTHS', 12),
+        ],
+
         'power' => [
             'service_charge' => 25_000,
             'min_amount' => 100_000,
@@ -38,6 +50,18 @@ return [
             'invoice_prefix' => 'INV',
             'reminder_days_before_due' => 3,
         ],
+    ],
+
+    /*
+    | Retention (months) for operational personal data, pruned daily by model:prune.
+    | Financial records, ledger, audit log and incidents are never pruned automatically.
+    | Confirm periods with the estate's data protection officer (NDPA 2023).
+    */
+    'retention' => [
+        'visits_months' => (int) env('RETENTION_VISITS_MONTHS', 12),
+        'pass_scans_months' => (int) env('RETENTION_PASS_SCANS_MONTHS', 6),
+        'visitor_passes_months' => (int) env('RETENTION_VISITOR_PASSES_MONTHS', 12),
+        'webhook_events_months' => (int) env('RETENTION_WEBHOOK_EVENTS_MONTHS', 12),
     ],
 
     'power' => [

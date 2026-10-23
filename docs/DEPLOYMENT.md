@@ -87,4 +87,4 @@ Electricity tokens are issued by queued jobs — **if the worker is down, paid p
 
 ## Data protection (NDPA 2023)
 
-Suggested retention, to be confirmed with the estate's DPO: visit logs 12 months, incident records 6 years, financial/ledger records 6 years (statutory), webhook payloads (already redacted) 12 months. Personal data in provider payloads is masked before storage; passwords and tokens are never logged.
+Automatic pruning (daily `model:prune`), configurable via `RETENTION_VISITS_MONTHS` (default 12), `RETENTION_PASS_SCANS_MONTHS` (6), `RETENTION_VISITOR_PASSES_MONTHS` (12) and `RETENTION_WEBHOOK_EVENTS_MONTHS` (12). Incidents, ledger, payments and the audit log are never pruned automatically (suggested: 6 years). Confirm periods with the estate's DPO. Personal data in provider payloads is masked before storage; passwords and tokens are never logged.

@@ -20,7 +20,13 @@ class Payment extends Model
         return [
             'status' => PaymentStatus::class,
             'paid_at' => 'datetime',
+            'reversed_at' => 'datetime',
         ];
+    }
+
+    public function reverser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reversed_by');
     }
 
     public function invoice(): BelongsTo

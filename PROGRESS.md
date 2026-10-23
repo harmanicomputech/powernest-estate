@@ -21,19 +21,22 @@ _Last updated: 2026-10-23_
 | Notifications (in-app centre + email, preferences), audit log (append-only) | |
 | Role dashboards, power operations, monthly reports — all from live queries | |
 | PWA: manifest, icons, conservative service worker, offline page | |
+| Safety & facility inspection checklists (failed items raise a maintenance request) | Tested |
+| Lost & found | Tested |
+| Estate payment reversals (ledger offset, invoice reopened, approver only) | Tested |
+| Facility booking fees billed as estate invoices; voided on cancellation | Tested |
+| Property document library (private storage, shared/internal visibility) | Tested |
+| Data retention pruning for visits, pass scans, expired passes, webhook payloads | Tested |
 
-**Tests:** 75 tests / 322 assertions passing on SQLite and on MariaDB (`php artisan test`).
+**Tests:** 82 tests / 381 assertions passing on SQLite and on MariaDB (`php artisan test`).
 
 ## Outstanding / not yet built
 
 - **Payaza status-query endpoint must be confirmed** (`PAYAZA_VERIFY_URL`); until then Payaza payments need manual confirmation by a finance approver.
 - Legacy data import (users, meters, transactions) — needs the live database dump.
 - SMS / WhatsApp delivery (only email + in-app; WhatsApp share links for passes).
-- Lost & found and safety-inspection checklist UIs (lost & found table exists).
 - Offline gate verification (intentionally not built; needs a separate signed-pass design).
-- Online collection of facility booking fees; refunds/reversals for estate payments.
-- General property document library (uploads exist for maintenance and incidents).
-- Automated retention/pruning jobs for visit logs and webhook payloads.
+- Gateway-initiated refunds (reversals are recorded; the money itself is refunded outside the app).
 - Subscription billing for estates.
 
 ## Useful commands

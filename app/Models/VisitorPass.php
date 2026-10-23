@@ -5,7 +5,9 @@ namespace App\Models;
 use App\Enums\PassStatus;
 use App\Enums\PassType;
 use App\Models\Concerns\BelongsToEstate;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,7 +15,7 @@ use Illuminate\Support\Carbon;
 
 class VisitorPass extends Model
 {
-    use BelongsToEstate, HasFactory;
+    use BelongsToEstate, HasFactory, MassPrunable;
 
     protected $guarded = ['id'];
 
@@ -85,5 +87,13 @@ class VisitorPass extends Model
     public function remainingEntries(): ?int
     {
         return $this->max_entries === null ? null : max(0, $this->max_entries - $this->entries_count);
+    }
+
+    /**
+     * Retention: see config/powernest.php (retention.visitor_passes_months).
+     */
+    public function prunable(): Builder
+    {
+        return static::where('status', '!=', 'active')->where('valid_until', '<', now()->subMonths((int) config('powernest.retention.visitor_passes_months')));
     }
 }

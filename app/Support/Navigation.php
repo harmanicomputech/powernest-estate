@@ -42,6 +42,7 @@ class Navigation
                 $can(P::BillingViewOwn) ? $item('Bills & payments', 'bills.index', 'receipt', 'bills.*') : null,
                 $can(P::MaintenanceRequest) && ! $can(P::MaintenanceManage) ? $item('Maintenance', 'maintenance.index', 'wrench', 'maintenance.*') : null,
                 $can(P::FacilitiesBook) ? $item('Facilities', 'facilities.index', 'calendar', 'facilities.*') : null,
+                $can(P::IncidentsReport) ? $item('Lost & found', 'lost-found.index', 'search', 'lost-found.*') : null,
             ]));
 
             if ($community) {
@@ -54,6 +55,7 @@ class Navigation
                 $can(P::IncidentsReport, P::IncidentsManage) ? $item('Incidents', 'incidents.index', 'siren', 'incidents.*') : null,
                 $can(P::MaintenanceManage, P::MaintenanceWork) ? $item('Work orders', 'maintenance.index', 'hammer', 'maintenance.*') : null,
                 $can(P::MaintenanceManage) ? $item('Assets', 'manage.assets.index', 'plug-zap', 'manage.assets.*') : null,
+                $can(P::InspectionsPerform) ? $item('Inspections', 'inspections.index', 'clipboard-check', 'inspections.*') : null,
                 $can(P::TasksWork) ? $item('Tasks', 'tasks.index', 'clipboard-list', 'tasks.*') : null,
             ]));
 

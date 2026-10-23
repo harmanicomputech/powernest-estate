@@ -34,8 +34,8 @@ class PageSmokeTest extends TestCase
 
         $common = ['/app', '/app/announcements', '/notifications', '/account'];
         $pages = [
-            'resident@powernest.test' => [...$common, '/app/home', '/app/visitors', '/app/visitors?tab=history', '/app/visitors/new', '/app/visitors/'.$pass->id, '/app/power', '/app/power/buy', '/app/power/history', '/app/power/purchases/'.$purchase->reference, '/app/bills', '/app/maintenance', '/app/maintenance/new', '/app/facilities', '/app/facilities/bookings', '/app/facilities/'.Facility::first()->id, '/app/incidents', '/app/incidents/new'],
-            'guard@powernest.test' => [...$common, '/app/gate', '/app/gate/expected', '/app/gate/inside', '/app/gate/walk-in', '/app/incidents', '/app/tasks'],
+            'resident@powernest.test' => [...$common, '/app/home', '/app/visitors', '/app/visitors?tab=history', '/app/visitors/new', '/app/visitors/'.$pass->id, '/app/power', '/app/power/buy', '/app/power/history', '/app/power/purchases/'.$purchase->reference, '/app/bills', '/app/maintenance', '/app/maintenance/new', '/app/facilities', '/app/facilities/bookings', '/app/facilities/'.Facility::first()->id, '/app/incidents', '/app/incidents/new', '/app/lost-found'],
+            'guard@powernest.test' => [...$common, '/app/inspections', '/app/lost-found', '/app/gate', '/app/gate/expected', '/app/gate/inside', '/app/gate/walk-in', '/app/incidents', '/app/tasks'],
             'supervisor@powernest.test' => [...$common, '/app/gate', '/app/manage/visits', '/app/incidents', '/app/incidents/'.Incident::first()->reference, '/app/tasks'],
             'facility@powernest.test' => [...$common, '/app/maintenance', '/app/maintenance?tab=overdue', '/app/maintenance/'.MaintenanceRequest::first()->reference, '/app/manage/assets', '/app/manage/bookings', '/app/manage/expenses', '/app/tasks'],
             'tech@powernest.test' => [...$common, '/app/maintenance', '/app/maintenance?tab=mine', '/app/tasks'],

@@ -3,18 +3,20 @@
 namespace App\Services\Operations;
 
 use App\Enums\BookingStatus;
+use App\Enums\InvoiceStatus;
 use App\Models\Booking;
 use App\Models\Facility;
 use App\Models\User;
 use App\Notifications\BookingUpdated;
 use App\Services\Audit\AuditLogger;
+use App\Services\Billing\BillingService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class BookingService
 {
-    public function __construct(private AuditLogger $audit) {}
+    public function __construct(private AuditLogger $audit, private BillingService $billing) {}
 
     public function book(User $user, Facility $facility, Carbon $startsAt, Carbon $endsAt, int $guests, ?string $purpose): Booking
     {
@@ -78,6 +80,10 @@ class BookingService
         $this->audit->record('booking.created', $booking, ['facility' => $facility->name], $facility->estate_id, $user);
 
         if ($booking->status === BookingStatus::Approved) {
+            $this->billFee($booking, $user);
+        }
+
+        if ($booking->status === BookingStatus::Approved) {
             $user->notify(new BookingUpdated($booking));
         }
 
@@ -91,6 +97,10 @@ class BookingService
         }
 
         $booking->update(['status' => $approve ? BookingStatus::Approved : BookingStatus::Rejected, 'reviewed_by' => $reviewer->id, 'reviewed_at' => now(), 'review_note' => $note]);
+
+        if ($approve) {
+            $this->billFee($booking, $reviewer);
+        }
         $this->audit->record($approve ? 'booking.approved' : 'booking.rejected', $booking, [], $booking->estate_id, $reviewer);
         $booking->user->notify(new BookingUpdated($booking));
     }
@@ -102,6 +112,33 @@ class BookingService
         }
 
         $booking->update(['status' => BookingStatus::Cancelled]);
+
+        if ($booking->invoice && $booking->invoice->amount_paid === 0 && $booking->invoice->status !== InvoiceStatus::Void) {
+            $this->billing->void($booking->invoice, $actor, 'Booking cancelled');
+        }
         $this->audit->record('booking.cancelled', $booking, [], $booking->estate_id, $actor);
+    }
+
+    /**
+     * Facility fees are billed as a normal estate invoice on the booker's property, so they are
+     * paid, receipted and reconciled through billing like any other charge.
+     */
+    private function billFee(Booking $booking, User $actor): void
+    {
+        if ($booking->fee <= 0 || $booking->invoice_id || ! $booking->property) {
+            return;
+        }
+
+        $tz = $booking->estate->timezone();
+        $invoice = $this->billing->issueInvoice(
+            $booking->estate,
+            $booking->property,
+            [['description' => "{$booking->facility->name} · ".$booking->starts_at->timezone($tz)->format('D j M, g:ia'), 'quantity' => 1, 'unit_amount' => $booking->fee]],
+            "Facility booking: {$booking->facility->name}",
+            Carbon::parse($booking->starts_at->timezone($tz)->toDateString())->max(now()->startOfDay()),
+            $actor,
+        );
+
+        $booking->update(['invoice_id' => $invoice->id]);
     }
 }

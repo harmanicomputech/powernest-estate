@@ -249,6 +249,38 @@ class BillingService
         $this->ledger($lockedInvoice, 'payment_received', credit: $amount, description: "Payment {$payment->reference} on {$lockedInvoice->number}", actor: $actor, source: $payment);
     }
 
+    /**
+     * Reverse a recorded payment (bounced transfer, chargeback, refund made outside the system).
+     * The payment and its allocations are kept for history; the ledger gets an offsetting debit
+     * and the affected invoices become payable again.
+     */
+    public function reversePayment(Payment $payment, User $actor, string $reason): Payment
+    {
+        abort_unless($actor->hasEstatePermission($payment->estate, Permission::BillingApprove), 403);
+
+        return DB::transaction(function () use ($payment, $actor, $reason) {
+            $locked = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->status !== PaymentStatus::Succeeded) {
+                throw ValidationException::withMessages(['payment' => 'Only successful payments can be reversed.']);
+            }
+
+            foreach ($locked->allocations as $allocation) {
+                $invoice = Invoice::whereKey($allocation->invoice_id)->lockForUpdate()->firstOrFail();
+                $invoice->amount_paid = max(0, $invoice->amount_paid - $allocation->amount);
+                $invoice->status = $this->statusFor($invoice);
+                $invoice->save();
+
+                $this->ledger($invoice, 'payment_reversed', debit: $allocation->amount, description: "Reversal of {$locked->reference}: {$reason}", actor: $actor, source: $locked);
+            }
+
+            $locked->update(['status' => PaymentStatus::Reversed, 'reversed_at' => now(), 'reversed_by' => $actor->id, 'reversal_reason' => $reason]);
+            $this->audit->record('payment.reversed', $locked, ['reason' => $reason, 'amount' => $locked->amount_received], $locked->estate_id, $actor);
+
+            return $locked;
+        });
+    }
+
     public function uniquePaymentReference(): string
     {
         do {

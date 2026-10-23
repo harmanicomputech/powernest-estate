@@ -10,7 +10,9 @@ use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\GateController;
 use App\Http\Controllers\HouseholdController;
 use App\Http\Controllers\IncidentController;
+use App\Http\Controllers\InspectionController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\LostFoundController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\Manage;
 use App\Http\Controllers\NotificationController;
@@ -157,6 +159,22 @@ Route::prefix('app')->middleware(['auth', 'verified', 'estate:required'])->group
     Route::post('/incidents/{incident}/status', [IncidentController::class, 'status'])->name('incidents.status');
     Route::post('/incidents/{incident}/note', [IncidentController::class, 'note'])->name('incidents.note');
 
+    // Lost & found
+    Route::middleware('can:incidents.report')->group(function () {
+        Route::get('/lost-found', [LostFoundController::class, 'index'])->name('lost-found.index');
+        Route::post('/lost-found', [LostFoundController::class, 'store'])->name('lost-found.store');
+        Route::post('/lost-found/{item}/resolve', [LostFoundController::class, 'resolve'])->name('lost-found.resolve');
+    });
+
+    // Inspections
+    Route::middleware('can:inspections.perform')->prefix('inspections')->name('inspections.')->group(function () {
+        Route::get('/', [InspectionController::class, 'index'])->name('index');
+        Route::post('/templates', [InspectionController::class, 'storeTemplate'])->name('templates.store');
+        Route::post('/templates/{template}/start', [InspectionController::class, 'start'])->name('start');
+        Route::get('/{inspection}', [InspectionController::class, 'show'])->name('show');
+        Route::post('/{inspection}/complete', [InspectionController::class, 'complete'])->name('complete');
+    });
+
     // Staff tasks
     Route::middleware('can:tasks.work')->group(function () {
         Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
@@ -175,6 +193,8 @@ Route::prefix('app')->middleware(['auth', 'verified', 'estate:required'])->group
             Route::put('/properties/{property}', [Manage\PropertyController::class, 'update'])->middleware('can:properties.manage')->name('properties.update');
             Route::post('/properties/{property}/occupants', [Manage\PropertyController::class, 'addOccupant'])->middleware('can:residents.manage')->name('properties.occupants.store');
             Route::delete('/occupancies/{occupancy}', [Manage\PropertyController::class, 'endOccupancy'])->middleware('can:residents.manage')->name('occupancies.end');
+            Route::post('/properties/{property}/documents', [Manage\PropertyController::class, 'storeDocument'])->middleware('can:properties.manage')->name('properties.documents.store');
+            Route::delete('/documents/{document}', [Manage\PropertyController::class, 'destroyDocument'])->middleware('can:properties.manage')->name('documents.destroy');
             Route::post('/move-requests/{moveRequest}', [Manage\PropertyController::class, 'reviewMove'])->middleware('can:residents.manage')->name('move-requests.review');
         });
 
@@ -209,6 +229,7 @@ Route::prefix('app')->middleware(['auth', 'verified', 'estate:required'])->group
             Route::post('/invoices/{invoice}/adjustment', [Manage\BillingController::class, 'requestAdjustment'])->name('invoices.adjustment');
             Route::post('/invoices/{invoice}/void', [Manage\BillingController::class, 'void'])->name('invoices.void');
             Route::post('/invoices/{invoice}/remind', [Manage\BillingController::class, 'remind'])->name('invoices.remind');
+            Route::post('/payments/{payment}/reverse', [Manage\BillingController::class, 'reversePayment'])->middleware('can:billing.approve')->name('payments.reverse');
             Route::post('/adjustments/{adjustment}', [Manage\BillingController::class, 'reviewAdjustment'])->middleware('can:billing.approve')->name('adjustments.review');
             Route::post('/charge-types', [Manage\BillingController::class, 'storeChargeType'])->name('charge-types.store');
             Route::post('/charge-types/{chargeType}/run', [Manage\BillingController::class, 'runCharge'])->name('charge-types.run');

@@ -7,17 +7,21 @@ use App\Enums\OccupancyStatus;
 use App\Enums\PropertyType;
 use App\Http\Controllers\Controller;
 use App\Models\Building;
+use App\Models\Document;
 use App\Models\MoveRequest;
 use App\Models\Occupancy;
 use App\Models\Property;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
 use App\Services\Billing\BillingService;
+use App\Services\Documents\DocumentStore;
 use App\Services\Estate\MembershipService;
 use App\Services\Estate\OccupancyService;
 use App\Support\EstateContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -97,7 +101,7 @@ class PropertyController extends Controller
         $estate = $this->context->estate();
 
         return view('manage.properties.show', [
-            'property' => $property->load('building', 'meters'),
+            'property' => $property->load('building', 'meters', 'documents.uploader'),
             'occupants' => $property->occupancies()->where('status', 'active')->with('user', 'primaryOccupancy.user')->get(),
             'history' => $property->occupancies()->where('status', 'ended')->with('user')->latest('ends_on')->limit(10)->get(),
             'invoices' => $property->invoices()->latest('issue_date')->limit(5)->get(),
@@ -165,6 +169,30 @@ class PropertyController extends Controller
         $occupancies->end($occupancy, $request->user());
 
         return back()->with('success', 'Occupancy ended. Access for this person (and their household) has been removed.');
+    }
+
+    public function storeDocument(Property $property, Request $request, DocumentStore $documents): RedirectResponse
+    {
+        $data = $request->validate([
+            'document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240'],
+            'shared' => ['nullable', 'boolean'],
+        ]);
+
+        $document = $documents->store($property, $data['document'], $request->user(), $request->boolean('shared') ? 'property_shared' : 'property_internal');
+        $this->audit->record('document.uploaded', $document, ['property' => $property->identifier, 'shared' => $request->boolean('shared')], $property->estate_id);
+
+        return back()->with('success', 'Document uploaded.');
+    }
+
+    public function destroyDocument(Document $document): RedirectResponse
+    {
+        Gate::authorize('delete', $document);
+
+        Storage::disk($document->disk)->delete($document->path);
+        $document->delete();
+        $this->audit->record('document.deleted', null, ['name' => $document->original_name], $document->estate_id);
+
+        return back()->with('success', 'Document deleted.');
     }
 
     public function reviewMove(MoveRequest $moveRequest, Request $request): RedirectResponse

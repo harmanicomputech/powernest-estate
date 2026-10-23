@@ -59,6 +59,29 @@
                     </form>
                 </x-ui.card>
             @endcan
+            <x-ui.card title="Documents" :padded="false">
+                @forelse ($property->documents as $doc)
+                    <div class="flex items-center gap-2 border-t border-line px-5 py-3 text-sm">
+                        <x-icon :name="$doc->isImage() ? 'image' : 'file-text'" class="size-4 shrink-0 text-muted" />
+                        <a href="{{ route('documents.show', $doc) }}" target="_blank" class="min-w-0 flex-1 truncate font-semibold hover:underline">{{ $doc->original_name }}</a>
+                        @if ($doc->category === 'property_shared')<x-ui.badge tone="info">Shared</x-ui.badge>@endif
+                        @can('properties.manage')
+                            <x-ui.confirm :action="route('manage.documents.destroy', $doc)" method="DELETE" title="Delete this document?" confirm="Delete" confirm-variant="danger" size="sm" variant="ghost">Delete</x-ui.confirm>
+                        @endcan
+                    </div>
+                @empty
+                    <p class="border-t border-line px-5 py-4 text-sm text-muted">No documents.</p>
+                @endforelse
+                @can('properties.manage')
+                    <form method="POST" action="{{ route('manage.properties.documents.store', $property) }}" enctype="multipart/form-data" class="space-y-3 border-t border-line p-5">@csrf
+                        <input type="file" name="document" accept="application/pdf,image/*" required class="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-sunken file:px-3 file:py-2 file:font-semibold">
+                        @error('document')<p class="text-[0.8125rem] text-danger">{{ $message }}</p>@enderror
+                        <x-ui.checkbox name="shared" label="Visible to occupants" description="e.g. lease, house rules. Leave off for deeds and internal records." />
+                        <x-ui.button size="sm" variant="secondary" icon="file-text">Upload</x-ui.button>
+                    </form>
+                @endcan
+            </x-ui.card>
+
             <x-ui.card title="Meters" :padded="false">
                 @forelse ($property->meters as $meter)
                     <div class="flex justify-between border-t border-line px-5 py-3 text-sm"><span class="font-mono">{{ $meter->meter_number }}</span><span class="text-muted">{{ $meter->label }}</span></div>

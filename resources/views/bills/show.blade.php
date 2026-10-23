@@ -41,7 +41,7 @@
                     @foreach ($invoice->allocations as $allocation)
                         <a href="{{ route('bills.receipt', $allocation->payment) }}" class="flex items-center justify-between border-t border-line px-5 py-3 text-sm hover:bg-canvas sm:px-6">
                             <span><span class="font-semibold">{{ humanize($allocation->payment->method) }}</span> <span class="text-muted">· {{ local_time($allocation->payment->paid_at, 'j M Y') }} · {{ $allocation->payment->reference }}</span></span>
-                            <span class="font-semibold tnum">{{ money($allocation->amount) }}</span>
+                            <span class="flex items-center gap-2">@if ($allocation->payment->status === \App\Enums\PaymentStatus::Reversed)<x-ui.badge tone="danger">Reversed</x-ui.badge>@endif<span @class(['font-semibold tnum', 'line-through text-muted' => $allocation->payment->status === \App\Enums\PaymentStatus::Reversed])>{{ money($allocation->amount) }}</span></span>
                         </a>
                     @endforeach
                 </x-ui.card>

@@ -63,7 +63,7 @@ class FacilityController extends Controller
     public function bookings(Request $request): View
     {
         return view('facilities.bookings', [
-            'bookings' => Booking::forEstate($this->context->estate())->where('user_id', $request->user()->id)->with('facility')->latest('starts_at')->paginate(20),
+            'bookings' => Booking::forEstate($this->context->estate())->where('user_id', $request->user()->id)->with('facility', 'invoice')->latest('starts_at')->paginate(20),
         ]);
     }
 
