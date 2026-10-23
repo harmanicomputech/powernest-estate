@@ -8,7 +8,9 @@
             <form method="POST" action="{{ $action }}" x-show="open" x-trap.noscroll="open" x-transition:enter="transition duration-200 ease-out" x-transition:enter-start="opacity-0 translate-y-6 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-data="submitting" x-on:submit="submit"
                   class="relative w-full max-w-md rounded-t-[1.5rem] bg-surface p-6 pb-safe shadow-[var(--shadow-raised)] sm:rounded-[1.25rem] sm:pb-6">
                 @csrf
-                @if (strtoupper($method) !== 'POST') @method($method) @endif
+                @if (strtoupper($method) !== 'POST')
+                    <input type="hidden" name="_method" value="{{ strtoupper($method) }}">
+                @endif
                 <h2 class="text-lg font-bold">{{ $title }}</h2>
                 @if ($message)<p class="mt-2 text-sm text-muted">{{ $message }}</p>@endif
                 @isset($fields)<div class="mt-4 space-y-4">{{ $fields }}</div>@endisset

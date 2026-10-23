@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Manage;
 
-use App\Enums\EstateRole;
 use App\Enums\OccupancyRelationship;
 use App\Enums\OccupancyStatus;
 use App\Enums\PropertyType;

@@ -8,6 +8,7 @@ use App\Enums\Priority;
 use App\Models\MaintenanceRequest;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Services\Estate\MembershipService;
 use App\Services\Operations\MaintenanceService;
 use App\Support\EstateContext;
 use App\Support\Money;
@@ -183,6 +184,6 @@ class MaintenanceController extends Controller
 
     private function workers($estate)
     {
-        return app(\App\Services\Estate\MembershipService::class)->usersWithPermission($estate, Permission::MaintenanceWork)->sortBy('name')->values();
+        return app(MembershipService::class)->usersWithPermission($estate, Permission::MaintenanceWork)->sortBy('name')->values();
     }
 }

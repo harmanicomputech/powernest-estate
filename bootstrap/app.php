@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\ResolveEstateContext;
 use App\Http\Middleware\SecurityHeaders;
+use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // The estate context must exist before route-model binding so estate-scoped models
         // resolve only inside the user's current estate.
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: ResolveEstateContext::class);
+        $middleware->prependToPriorityList(before: ResolveEstateContext::class, prepend: EnsureEmailIsVerified::class);
         $middleware->alias([
             'estate' => ResolveEstateContext::class,
             'platform' => EnsurePlatformAdmin::class,

@@ -20,7 +20,7 @@ class InvoiceIssued extends AppNotification
 
     protected function body(): string
     {
-        return $this->invoice->description." · ".Money::format($this->invoice->total)." due ".$this->invoice->due_date->format("j M Y").".";
+        return $this->invoice->description.' · '.Money::format($this->invoice->total).' due '.$this->invoice->due_date->format('j M Y').'.';
     }
 
     protected function url(): ?string

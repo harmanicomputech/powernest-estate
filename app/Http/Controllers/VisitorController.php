@@ -10,7 +10,8 @@ use App\Models\VisitorPass;
 use App\Services\Visitors\GateService;
 use App\Services\Visitors\PassService;
 use App\Support\EstateContext;
-use chillerlan\QRCode\Output\QROutputInterface;
+use chillerlan\QRCode\Common\EccLevel;
+use chillerlan\QRCode\Output\QRMarkupSVG;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use Illuminate\Http\RedirectResponse;
@@ -132,15 +133,14 @@ class VisitorController extends Controller
     public static function qrSvg(string $payload): string
     {
         $options = new QROptions([
-            'outputType' => QROutputInterface::MARKUP_SVG,
+            'outputInterface' => QRMarkupSVG::class,
             'outputBase64' => false,
-            'eccLevel' => \chillerlan\QRCode\Common\EccLevel::M,
+            'eccLevel' => EccLevel::M,
             'addQuietzone' => true,
             'quietzoneSize' => 2,
-            'svgUseFillAttributes' => true,
-            'moduleValues' => [],
             'drawLightModules' => false,
             'connectPaths' => true,
+            'svgUseFillAttributes' => true,
         ]);
 
         return (new QRCode($options))->render($payload);

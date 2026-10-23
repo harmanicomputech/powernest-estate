@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Announcement extends Model
 {
-    use HasFactory, BelongsToEstate;
+    use BelongsToEstate, HasFactory;
 
     protected $guarded = ['id'];
 

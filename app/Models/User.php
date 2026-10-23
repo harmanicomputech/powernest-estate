@@ -35,7 +35,7 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @var array<string, mixed>
      */
-    protected $attributes = ['status' => 'active', 'is_platform_admin' => false];
+    protected $attributes = ['status' => 'active', 'is_platform_admin' => false, 'current_estate_id' => null];
 
     /**
      * @var list<string>

@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Property extends Model
 {
-    use HasFactory, BelongsToEstate;
+    use BelongsToEstate, HasFactory;
 
     protected $guarded = ['id'];
 

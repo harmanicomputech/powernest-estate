@@ -51,7 +51,7 @@ enum EstateRole: string
     }
 
     /**
-     * @return list<Permission>
+     * @return list<P>
      */
     public function permissions(): array
     {

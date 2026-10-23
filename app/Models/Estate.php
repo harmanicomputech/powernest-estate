@@ -13,6 +13,13 @@ class Estate extends Model
 
     protected $guarded = ['id'];
 
+    /**
+     * Mirror database defaults for freshly created models.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = ['status' => 'active', 'timezone' => 'Africa/Lagos', 'currency' => 'NGN', 'country' => 'NG'];
+
     protected function casts(): array
     {
         return [

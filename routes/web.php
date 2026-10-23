@@ -24,7 +24,6 @@ use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => auth()->check() ? redirect()->route('dashboard') : view('welcome'))->name('home');
-Route::view('/offline', 'offline')->name('offline');
 
 // Shareable visitor pass (the link itself is the credential; no host data beyond what the visitor needs).
 Route::get('/p/{token}', [PublicPassController::class, 'show'])->middleware('throttle:public-pass')->name('passes.public');

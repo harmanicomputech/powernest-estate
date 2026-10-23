@@ -56,7 +56,9 @@
     </div>
 
     <x-ui.card title="Recent activity" :padded="false">
-        @can('audit.view')<x-slot:action><a href="{{ route('manage.audit.index') }}" class="text-sm font-semibold text-brand-700 hover:underline">Audit log</a></x-slot:action>@endcan
+        <x-slot:action>
+            @can('audit.view')<a href="{{ route('manage.audit.index') }}" class="text-sm font-semibold text-brand-700 hover:underline">Audit log</a>@endcan
+        </x-slot:action>
         <ul class="divide-y divide-line border-t border-line">
             @forelse ($data['activity'] as $log)
                 <li class="flex items-center gap-3 px-5 py-3 sm:px-6">

@@ -11,6 +11,7 @@ use App\Enums\PaymentStatus;
 use App\Enums\PowerPurchaseStatus;
 use App\Enums\VisitStatus;
 use App\Models\Announcement;
+use App\Models\Asset;
 use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\Estate;
@@ -78,7 +79,7 @@ class DashboardMetrics
             'unassigned' => (clone $open)->where('status', MaintenanceStatus::Submitted->value)->count(),
             'completed30' => MaintenanceRequest::forEstate($estate)->whereIn('status', [MaintenanceStatus::Completed->value, MaintenanceStatus::Closed->value])->where('completed_at', '>=', now()->subDays(30))->count(),
             'queue' => (clone $open)->with('property', 'assignee')->orderByRaw("CASE priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END")->oldest()->limit(6)->get(),
-            'assets' => \App\Models\Asset::forEstate($estate)->whereNotNull('next_service_due_on')->where('next_service_due_on', '<=', now()->addDays(14))->orderBy('next_service_due_on')->limit(5)->get(),
+            'assets' => Asset::forEstate($estate)->whereNotNull('next_service_due_on')->where('next_service_due_on', '<=', now()->addDays(14))->orderBy('next_service_due_on')->limit(5)->get(),
             'myTasks' => StaffTask::forEstate($estate)->where('assigned_to', $user->id)->whereIn('status', ['open', 'in_progress'])->orderByRaw('due_at IS NULL')->orderBy('due_at')->limit(5)->get(),
         ];
     }

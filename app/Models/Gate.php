@@ -8,9 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class Gate extends Model
 {
-    use HasFactory, BelongsToEstate;
+    use BelongsToEstate, HasFactory;
 
     protected $guarded = ['id'];
+
+    /**
+     * Mirror database defaults for freshly created models.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = ['is_active' => true];
 
     protected function casts(): array
     {

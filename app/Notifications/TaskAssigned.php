@@ -19,7 +19,7 @@ class TaskAssigned extends AppNotification
 
     protected function body(): string
     {
-        return $this->task->due_at ? "Due ".$this->task->due_at->diffForHumans()."." : "No due date.";
+        return $this->task->due_at ? 'Due '.$this->task->due_at->diffForHumans().'.' : 'No due date.';
     }
 
     protected function url(): ?string

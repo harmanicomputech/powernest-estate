@@ -20,7 +20,7 @@ class InvoiceReminder extends AppNotification
 
     protected function body(): string
     {
-        return Money::format($this->invoice->balance())." outstanding for ".$this->invoice->description.".";
+        return Money::format($this->invoice->balance()).' outstanding for '.$this->invoice->description.'.';
     }
 
     protected function url(): ?string

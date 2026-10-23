@@ -10,6 +10,8 @@ class VendAttempt extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $guarded = ['id'];
 
     protected function casts(): array

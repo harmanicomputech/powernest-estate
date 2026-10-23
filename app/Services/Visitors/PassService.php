@@ -5,7 +5,6 @@ namespace App\Services\Visitors;
 use App\Enums\PassStatus;
 use App\Enums\PassType;
 use App\Models\Estate;
-use App\Models\Property;
 use App\Models\User;
 use App\Models\VisitorPass;
 use App\Services\Audit\AuditLogger;

@@ -19,7 +19,7 @@ class VisitorArrivedNotification extends AppNotification
 
     protected function body(): string
     {
-        return "Checked in at the gate at ".$this->visit->checked_in_at->timezone($this->visit->estate->timezone())->format("g:ia").($this->visit->vehicle_plate ? " · Vehicle {$this->visit->vehicle_plate}" : "").".";
+        return 'Checked in at the gate at '.$this->visit->checked_in_at->timezone($this->visit->estate->timezone())->format('g:ia').($this->visit->vehicle_plate ? " · Vehicle {$this->visit->vehicle_plate}" : '').'.';
     }
 
     protected function url(): ?string

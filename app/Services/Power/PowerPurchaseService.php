@@ -23,6 +23,7 @@ use App\Models\VendAttempt;
 use App\Notifications\PowerPurchaseNeedsAttention;
 use App\Notifications\PowerTokenIssued;
 use App\Services\Audit\AuditLogger;
+use App\Services\Estate\MembershipService;
 use App\Support\Money;
 use App\Support\Reference;
 use Illuminate\Support\Facades\DB;
@@ -536,7 +537,7 @@ class PowerPurchaseService
 
     private function notifyStaff(PowerPurchase $purchase): void
     {
-        $staff = app(\App\Services\Estate\MembershipService::class)->usersWithPermission($purchase->estate, Permission::PowerReconcile);
+        $staff = app(MembershipService::class)->usersWithPermission($purchase->estate, Permission::PowerReconcile);
         Notification::send($staff, new PowerPurchaseNeedsAttention($purchase));
     }
 

@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Notifications\EstateInvitationNotification;
 use App\Notifications\MembershipRequestNotification;
 use App\Services\Audit\AuditLogger;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -168,7 +169,7 @@ class MembershipService
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, User>
+     * @return Collection<int, User>
      */
     public function usersWithPermission(Estate $estate, Permission $permission)
     {

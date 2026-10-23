@@ -19,7 +19,7 @@ class BookingUpdated extends AppNotification
 
     protected function body(): string
     {
-        return $this->booking->starts_at->timezone($this->booking->estate->timezone())->format("D j M, g:ia")." – ".$this->booking->ends_at->timezone($this->booking->estate->timezone())->format("g:ia").".";
+        return $this->booking->starts_at->timezone($this->booking->estate->timezone())->format('D j M, g:ia').' – '.$this->booking->ends_at->timezone($this->booking->estate->timezone())->format('g:ia').'.';
     }
 
     protected function url(): ?string

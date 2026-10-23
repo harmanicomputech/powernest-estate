@@ -1,0 +1,23 @@
+{
+  "name": "PowerNest Estate",
+  "short_name": "PowerNest",
+  "description": "Visitors, electricity, bills and estate services in one place.",
+  "id": "/app",
+  "start_url": "/app?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f6f5f1",
+  "theme_color": "#10382a",
+  "categories": ["lifestyle", "utilities", "finance"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Invite a visitor", "url": "/app/visitors/new", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Buy electricity", "url": "/app/power/buy", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Gate console", "url": "/app/gate", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

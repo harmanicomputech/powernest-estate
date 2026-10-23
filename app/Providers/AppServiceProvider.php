@@ -3,9 +3,9 @@
 namespace App\Providers;
 
 use App\Enums\Permission;
+use App\Http\Middleware\ResolveEstateContext;
 use App\Integrations\Vending\ElectricityVendor;
 use App\Integrations\Vending\StronVendor;
-use App\Http\Middleware\ResolveEstateContext;
 use App\Models\Estate;
 use App\Models\User;
 use App\Support\EstateContext;

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Document extends Model
 {
-    use HasFactory, BelongsToEstate;
+    use BelongsToEstate, HasFactory;
 
     protected $guarded = ['id'];
 

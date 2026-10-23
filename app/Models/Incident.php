@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Incident extends Model
 {
-    use HasFactory, BelongsToEstate;
+    use BelongsToEstate, HasFactory;
 
     protected $guarded = ['id'];
 

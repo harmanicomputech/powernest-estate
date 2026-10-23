@@ -15,12 +15,12 @@ class PaymentReceipt extends AppNotification
 
     protected function title(): string
     {
-        return "Payment received · ".Money::format($this->payment->amount_received ?? $this->payment->amount);
+        return 'Payment received · '.Money::format($this->payment->amount_received ?? $this->payment->amount);
     }
 
     protected function body(): string
     {
-        return "Thank you. Payment {$this->payment->reference} was applied to ".($this->payment->invoice?->number ?? "your account").".";
+        return "Thank you. Payment {$this->payment->reference} was applied to ".($this->payment->invoice?->number ?? 'your account').'.';
     }
 
     protected function url(): ?string

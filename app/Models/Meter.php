@@ -10,9 +10,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Meter extends Model
 {
-    use HasFactory, BelongsToEstate;
+    use BelongsToEstate, HasFactory;
 
     protected $guarded = ['id'];
+
+    /**
+     * Mirror database defaults for freshly created models.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = ['status' => 'active'];
 
     protected function casts(): array
     {

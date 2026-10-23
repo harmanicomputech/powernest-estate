@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class EmergencyContact extends Model
 {
-    use HasFactory, BelongsToEstate;
+    use BelongsToEstate, HasFactory;
 
     protected $guarded = ['id'];
 }

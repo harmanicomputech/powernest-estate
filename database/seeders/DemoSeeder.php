@@ -23,6 +23,7 @@ use App\Models\Estate;
 use App\Models\Expense;
 use App\Models\Facility;
 use App\Models\Gate;
+use App\Models\Invoice;
 use App\Models\Meter;
 use App\Models\Occupancy;
 use App\Models\PowerPurchase;
@@ -319,7 +320,7 @@ class DemoSeeder extends Seeder
         }
 
         // Most residents paid older invoices; some partial; current month mostly open.
-        $invoices = \App\Models\Invoice::where('estate_id', $this->estate->id)->orderBy('issue_date')->get();
+        $invoices = Invoice::where('estate_id', $this->estate->id)->orderBy('issue_date')->get();
         foreach ($invoices as $i => $invoice) {
             $isCurrent = $invoice->issue_date->gte(now($tz)->startOfMonth());
             $roll = mt_rand(1, 10);
@@ -390,7 +391,7 @@ class DemoSeeder extends Seeder
 
         foreach ([
             ['Scheduled power maintenance — Saturday', "Our electricity provider will carry out maintenance on the estate transformer this Saturday from 9am to 2pm. The estate generator will run during this period.\n\nPlease buy electricity tokens in advance if your meter is low.", AnnouncementCategory::UtilityInterruption, true],
-            ['Quarterly residents’ meeting', "The quarterly residents’ meeting holds at the clubhouse on the last Sunday of the month at 4pm. Agenda: security upgrades, service charge review and the new visitor pass system.", AnnouncementCategory::Event, false],
+            ['Quarterly residents’ meeting', 'The quarterly residents’ meeting holds at the clubhouse on the last Sunday of the month at 4pm. Agenda: security upgrades, service charge review and the new visitor pass system.', AnnouncementCategory::Event, false],
             ['New digital visitor passes', 'From this month all visitors must present a PowerNest Estate pass (QR or 6-digit code) at the gate. Create passes from the Visitors tab in the app.', AnnouncementCategory::Security, false],
         ] as $n => [$title, $body, $category, $pinned]) {
             Announcement::create(['estate_id' => $this->estate->id, 'author_id' => $this->staff['manager']->id, 'title' => $title, 'body' => $body, 'category' => $category, 'audience' => 'estate', 'is_pinned' => $pinned, 'published_at' => now()->subDays($n * 3 + 1)]);

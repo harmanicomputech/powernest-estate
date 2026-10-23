@@ -5,7 +5,6 @@ namespace App\Services\Billing;
 use App\Enums\PaymentStatus;
 use App\Enums\Permission;
 use App\Integrations\IntegrationException;
-use App\Integrations\Payments\CheckoutSession;
 use App\Integrations\Payments\GatewayManager;
 use App\Integrations\Payments\PaymentIntent;
 use App\Integrations\Payments\PaymentVerification;

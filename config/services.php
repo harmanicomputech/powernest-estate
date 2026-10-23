@@ -35,7 +35,6 @@ return [
         ],
     ],
 
-
     'stron' => [
         'base_url' => env('STRON_BASE_URL'),
         'company' => env('STRON_COMPANY'),

@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Gate;
 use App\Models\SecurityShift;
 use App\Models\VisitorPass;
 use App\Services\Visitors\GateService;
@@ -10,7 +11,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
@@ -37,7 +37,6 @@ class GateConsole extends Component
 
     public ?string $admitted = null;
 
-    #[On('pass-scanned')]
     public function scanned(string $value): void
     {
         $this->code = $value;
@@ -129,7 +128,7 @@ class GateConsole extends Component
         return VisitorPass::where('estate_id', $estate->id)->findOrFail($this->passId);
     }
 
-    private function gate(): ?\App\Models\Gate
+    private function gate(): ?Gate
     {
         return SecurityShift::where('estate_id', app(EstateContext::class)->estate()->id)->where('user_id', Auth::id())->whereNull('ended_at')->latest()->first()?->gate;
     }
