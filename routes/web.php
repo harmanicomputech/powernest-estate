@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\BillController;
+use App\Http\Controllers\CronController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\EstateSwitchController;
@@ -37,6 +38,9 @@ Route::middleware('throttle:webhooks')->group(function () {
     Route::post('/webhooks/paystack', [WebhookController::class, 'paystack'])->name('webhooks.paystack');
     Route::post('/webhooks/payaza/{secret?}', [WebhookController::class, 'payaza'])->name('webhooks.payaza');
 });
+
+// Shared-hosting cron (see docs/DEPLOYMENT.md). Token-protected; returns 404 unless CRON_TOKEN matches.
+Route::get('/cron/{token}', CronController::class)->middleware('throttle:10,1')->name('cron');
 
 Route::get('/invitations/{token}', [InvitationController::class, 'show'])->name('invitations.show');
 

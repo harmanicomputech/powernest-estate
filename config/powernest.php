@@ -11,6 +11,11 @@ return [
     */
     'integrations_live' => (bool) env('INTEGRATIONS_LIVE', false),
 
+    /*
+    | Secret for the web cron endpoint (/cron/{token}) used on hosts without shell access.
+    */
+    'cron_token' => env('CRON_TOKEN'),
+
     'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'Africa/Lagos'),
 
     'currency' => 'NGN',

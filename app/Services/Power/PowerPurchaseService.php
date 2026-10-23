@@ -250,6 +250,8 @@ class PowerPurchaseService
             return $purchase->refresh();
         }
 
+        // On shared hosting vending can run inside a web request; give the vendor call room to finish.
+        @set_time_limit(max(120, (int) config('services.stron.timeout') + 30));
         $result = $this->vendor->vend($purchase->meter_number, $purchase->vend_amount, $purchase->reference);
 
         $notifyStaff = false;
