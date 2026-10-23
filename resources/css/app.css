@@ -1,0 +1,182 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/manrope';
+@import '@fontsource-variable/fraunces';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+@source '../../app/**/*.php';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ | PowerNest Estate design tokens.
+ | Rebrand by changing the brand / gold / canvas scales only.
+ */
+@theme {
+    --font-sans: 'Manrope Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Fraunces Variable', ui-serif, Georgia, serif;
+
+    --color-brand-50: #f1f8f4;
+    --color-brand-100: #dcefe4;
+    --color-brand-200: #b9dfca;
+    --color-brand-300: #89c6a6;
+    --color-brand-400: #55a67e;
+    --color-brand-500: #2f8862;
+    --color-brand-600: #1f6e4e;
+    --color-brand-700: #195840;
+    --color-brand-800: #154634;
+    --color-brand-900: #10382a;
+    --color-brand-950: #0a2219;
+
+    --color-gold-50: #fbf7ec;
+    --color-gold-100: #f5ebcd;
+    --color-gold-200: #ebd597;
+    --color-gold-300: #dfbc63;
+    --color-gold-400: #d4a843;
+    --color-gold-500: #b98a2d;
+    --color-gold-600: #946b23;
+
+    --color-canvas: #f6f5f1;
+    --color-surface: #ffffff;
+    --color-sunken: #efede7;
+    --color-line: #e5e2da;
+    --color-line-strong: #d3cfc4;
+    --color-ink: #1b1f1d;
+    --color-ink-soft: #3b413e;
+    --color-muted: #6a716c;
+    --color-faint: #9aa09b;
+
+    --color-success: #18794e;
+    --color-success-soft: #e3f4ea;
+    --color-warning: #a35a00;
+    --color-warning-soft: #fdf1dc;
+    --color-danger: #b42318;
+    --color-danger-soft: #fdecea;
+    --color-info: #1f5aa6;
+    --color-info-soft: #e5eefa;
+
+    --radius-card: 1.125rem;
+    --radius-control: 0.75rem;
+
+    --shadow-card: 0 1px 2px rgb(16 24 20 / 0.04), 0 1px 1px rgb(16 24 20 / 0.03);
+    --shadow-raised: 0 10px 30px -12px rgb(16 40 30 / 0.18), 0 2px 6px -2px rgb(16 40 30 / 0.08);
+    --shadow-focus: 0 0 0 4px rgb(47 136 98 / 0.18);
+
+    --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+    --animate-fade-up: fade-up 0.45s var(--ease-out-soft) both;
+    --animate-pop: pop 0.35s var(--ease-out-soft) both;
+    --animate-shimmer: shimmer 1.6s linear infinite;
+
+    @keyframes fade-up {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pop {
+        from { opacity: 0; transform: scale(0.96); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes shimmer {
+        from { background-position: -400px 0; }
+        to { background-position: 400px 0; }
+    }
+}
+
+@layer base {
+    html {
+        -webkit-tap-highlight-color: transparent;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+        @apply bg-canvas text-ink font-sans;
+        font-feature-settings: 'ss01', 'cv11';
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--color-brand-500);
+        outline-offset: 2px;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
+    ::selection {
+        background: var(--color-brand-200);
+    }
+}
+
+@layer components {
+    .card {
+        @apply bg-surface rounded-[var(--radius-card)] border border-line shadow-[var(--shadow-card)];
+    }
+
+    .card-pad {
+        @apply p-5 sm:p-6;
+    }
+
+    .eyebrow {
+        @apply text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-muted;
+    }
+
+    .display {
+        font-family: var(--font-display);
+        font-optical-sizing: auto;
+        font-variation-settings: 'SOFT' 50, 'WONK' 0;
+        letter-spacing: -0.02em;
+    }
+
+    .control {
+        @apply block w-full rounded-[var(--radius-control)] border border-line-strong bg-surface px-3.5 py-2.5 text-[0.9375rem] text-ink placeholder:text-faint transition-[border-color,box-shadow] duration-150;
+        @apply focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none;
+        @apply disabled:bg-sunken disabled:text-muted;
+    }
+
+    .control[aria-invalid='true'] {
+        @apply border-danger focus:shadow-[0_0_0_4px_rgb(180_35_24/0.14)];
+    }
+
+    .tnum {
+        font-variant-numeric: tabular-nums;
+    }
+
+    .skeleton {
+        @apply rounded-md;
+        background: linear-gradient(90deg, var(--color-sunken) 0, #f7f6f2 120px, var(--color-sunken) 240px);
+        background-size: 800px 100%;
+        animation: var(--animate-shimmer);
+    }
+
+    .link {
+        @apply font-semibold text-brand-700 underline-offset-4 hover:underline;
+    }
+
+    .scroll-x {
+        @apply overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+    }
+}
+
+@utility pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+
+@utility pt-safe {
+    padding-top: env(safe-area-inset-top);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
