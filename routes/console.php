@@ -2,11 +2,14 @@
 
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
+use App\Models\PowerPurchase;
+use App\Models\PowerToken;
 use App\Models\User;
 use App\Notifications\InvoiceReminder;
 use App\Services\Power\PowerPurchaseService;
 use App\Services\Visitors\PassService;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Str;
 
@@ -52,7 +55,33 @@ Artisan::command('powernest:create-admin', function () {
     $this->info("Platform administrator {$email} is ready. Enable two-factor authentication after signing in.");
 })->purpose('Create or promote a platform super administrator');
 
+Artisan::command('power:import-legacy-tokens', function () {
+    $moved = 0;
+    DB::table('legacy_token_imports')->orderBy('id')->limit(1000)->get()->each(function (object $row) use (&$moved) {
+        DB::transaction(function () use ($row, &$moved) {
+            $purchase = PowerPurchase::where('reference', $row->purchase_reference)->first();
+
+            if ($purchase && ! $purchase->token()->exists()) {
+                PowerToken::create([
+                    'power_purchase_id' => $purchase->id,
+                    'token' => preg_replace('/\s+/', '', $row->token),
+                    'units' => $row->units,
+                    'meter_number' => $row->meter_number,
+                    'source' => 'legacy',
+                    'meta' => $row->meta ? json_decode($row->meta, true) : null,
+                    'issued_at' => $row->issued_at,
+                ]);
+                $moved++;
+            }
+
+            DB::table('legacy_token_imports')->where('id', $row->id)->delete();
+        });
+    });
+    $this->info("Imported {$moved} legacy tokens");
+})->purpose('Encrypt electricity tokens imported from the legacy PowerNest app into power_tokens');
+
 Schedule::command('power:reconcile')->everyFiveMinutes()->withoutOverlapping()->onOneServer();
+Schedule::command('power:import-legacy-tokens')->everyMinute()->withoutOverlapping();
 Schedule::command('passes:expire')->everyFifteenMinutes()->withoutOverlapping();
 Schedule::command('billing:remind')->dailyAt('08:00')->timezone('Africa/Lagos')->onOneServer();
 Schedule::command('queue:prune-failed --hours=720')->daily();

@@ -33,7 +33,9 @@ class PowerController extends Controller
             'purchases' => $purchases,
             'monthSpend' => (int) $monthSpend,
             'properties' => $user->authorizedProperties($estate)->orderBy('identifier')->get(),
-            'attention' => PowerPurchase::forEstate($estate)->where('user_id', $user->id)->whereIn('status', [PowerPurchaseStatus::Paid->value, PowerPurchaseStatus::Vending->value, PowerPurchaseStatus::VendFailed->value, PowerPurchaseStatus::ReconciliationRequired->value])->latest()->get(),
+            // Old-app purchases without a token are reviewed by staff, not shown to residents as live alerts.
+            'attention' => PowerPurchase::forEstate($estate)->where('user_id', $user->id)->whereIn('status', [PowerPurchaseStatus::Paid->value, PowerPurchaseStatus::Vending->value, PowerPurchaseStatus::VendFailed->value, PowerPurchaseStatus::ReconciliationRequired->value])
+                ->where(fn ($q) => $q->whereNull('failure_code')->orWhere('failure_code', '!=', 'legacy_no_token'))->latest()->get(),
         ]);
     }
 }
