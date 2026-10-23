@@ -22,7 +22,7 @@
 </div>
 
 {{-- Desktop sidebar --}}
-<aside class="fixed inset-y-0 left-0 z-40 hidden w-[17rem] flex-col border-r border-line bg-surface lg:flex">
+<aside class="app-sidebar fixed inset-y-0 left-0 z-40 hidden w-[17rem] flex-col border-r border-line bg-surface lg:flex">
     <div class="flex h-16 items-center px-6"><a href="{{ route('dashboard') }}"><x-brand.logo /></a></div>
     @if ($estate)
         <div class="px-4 pb-2">
@@ -37,7 +37,7 @@
                     @foreach ($section['items'] as $item)
                         @php $active = request()->routeIs($item['active']); @endphp
                         <li>
-                            <a href="{{ route($item['route']) }}" @class([
+                            <a href="{{ route($item['route']) }}" data-press="soft" @class([
                                 'group flex items-center gap-3 rounded-[0.7rem] px-3 py-2 text-[0.875rem] font-semibold transition',
                                 'bg-brand-50 text-brand-800' => $active,
                                 'text-ink-soft hover:bg-sunken hover:text-ink' => ! $active,
@@ -58,7 +58,7 @@
 
 <div class="lg:pl-[17rem]">
     {{-- Top bar --}}
-    <header class="sticky top-0 z-30 border-b border-line/70 bg-canvas/85 pt-safe backdrop-blur-md supports-[backdrop-filter]:bg-canvas/70">
+    <header class="app-topbar sticky top-0 z-30 border-b border-line/70 bg-canvas/85 pt-safe backdrop-blur-md supports-[backdrop-filter]:bg-canvas/70">
         <div class="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6 lg:px-8">
             <a href="{{ route('dashboard') }}" class="lg:hidden"><x-brand.mark class="size-9" /></a>
             <div class="min-w-0 flex-1 lg:hidden">
@@ -81,30 +81,30 @@
     </header>
 
     <main @class(['mx-auto px-4 pb-28 pt-6 sm:px-6 sm:pt-8 lg:px-8 lg:pb-16', 'max-w-6xl' => ! $wide, 'max-w-7xl' => $wide])>
-        <div class="animate-fade-up">{{ $slot }}</div>
+        <div class="page-enter">{{ $slot }}</div>
     </main>
 </div>
 
 {{-- Mobile bottom bar --}}
 @if ($bottom)
-    <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 pb-safe backdrop-blur-md lg:hidden" aria-label="Quick">
+    <nav class="app-bottombar fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 pb-safe backdrop-blur-md lg:hidden" aria-label="Quick">
         <ul class="mx-auto grid max-w-md" style="grid-template-columns: repeat({{ count($bottom) + 1 }}, minmax(0, 1fr))">
             @foreach ($bottom as $item)
                 @php $active = request()->routeIs($item['active']); @endphp
                 <li>
-                    <a href="{{ route($item['route']) }}" class="flex flex-col items-center gap-1 pb-2 pt-2.5 text-[0.6875rem] font-semibold {{ $active ? 'text-brand-700' : 'text-muted' }}" @if($active) aria-current="page" @endif>
+                    <a href="{{ route($item['route']) }}" class="flex flex-col items-center gap-1 pb-2 pt-2.5 text-[0.6875rem] font-semibold {{ $active ? 'text-brand-700' : 'text-muted' }}" data-haptic data-press="soft" @if($active) aria-current="page" @endif>
                         @if (! empty($item['primary']))
-                            <span class="-mt-6 grid size-12 place-items-center rounded-2xl bg-brand-700 text-gold-200 shadow-[0_8px_20px_-6px_rgb(16_56_42/0.6)] ring-4 ring-surface"><x-icon :name="$item['icon']" class="size-[1.375rem]" /></span>
+                            <span data-ripple class="-mt-6 grid size-12 place-items-center rounded-2xl bg-brand-700 text-gold-200 shadow-[0_8px_20px_-6px_rgb(16_56_42/0.6)] ring-4 ring-surface"><x-icon :name="$item['icon']" class="size-[1.375rem]" /></span>
                         @else
-                            <span @class(['grid h-7 w-12 place-items-center rounded-full transition', 'bg-brand-50' => $active])><x-icon :name="$item['icon']" class="size-5" /></span>
+                            <span data-ripple @class(['nav-pill grid h-7 w-12 place-items-center rounded-full transition', 'bg-brand-50' => $active])><x-icon :name="$item['icon']" class="size-5" /></span>
                         @endif
                         {{ $item['label'] }}
                     </a>
                 </li>
             @endforeach
             <li>
-                <button type="button" x-on:click="nav = true" class="flex w-full flex-col items-center gap-1 pb-2 pt-2.5 text-[0.6875rem] font-semibold text-muted">
-                    <span class="grid h-7 w-12 place-items-center"><x-icon name="ellipsis" class="size-5" /></span>
+                <button type="button" x-on:click="nav = true" data-haptic data-press="soft" class="flex w-full flex-col items-center gap-1 pb-2 pt-2.5 text-[0.6875rem] font-semibold text-muted">
+                    <span data-ripple class="grid h-7 w-12 place-items-center rounded-full"><x-icon name="ellipsis" class="size-5" /></span>
                     More
                 </button>
             </li>
@@ -115,11 +115,12 @@
 {{-- Mobile navigation sheet --}}
 <div x-show="nav" x-cloak class="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
     <div x-show="nav" x-transition.opacity class="absolute inset-0 bg-brand-950/40" x-on:click="nav = false"></div>
-    <div x-show="nav" x-trap.noscroll="nav"
+    <div x-show="nav" x-trap.noscroll="nav" x-swipe-dismiss="nav = false"
          x-transition:enter="transition duration-300 ease-[var(--ease-out-soft)]" x-transition:enter-start="translate-y-full" x-transition:enter-end="translate-y-0"
          x-transition:leave="transition duration-200 ease-in" x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full"
-         class="absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[1.5rem] bg-surface pb-safe">
-        <div class="sticky top-0 z-10 flex items-center justify-between bg-surface px-5 pb-3 pt-4">
+         class="absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto overscroll-contain rounded-t-[1.5rem] bg-surface pb-safe">
+        <div class="mx-auto mt-2.5 h-1 w-10 rounded-full bg-line-strong"></div>
+        <div class="sticky top-0 z-10 flex items-center justify-between bg-surface px-5 pb-3 pt-2">
             <x-user-menu :user="$user" compact inline />
             <button type="button" x-on:click="nav = false" class="grid size-10 place-items-center rounded-xl hover:bg-sunken" aria-label="Close menu"><x-icon name="x" class="size-5" /></button>
         </div>
@@ -133,7 +134,7 @@
                     <div class="grid grid-cols-2 gap-2">
                         @foreach ($section['items'] as $item)
                             @php $active = request()->routeIs($item['active']); @endphp
-                            <a href="{{ route($item['route']) }}" @class(['flex items-center gap-2.5 rounded-xl border px-3 py-3 text-sm font-semibold', 'border-brand-200 bg-brand-50 text-brand-800' => $active, 'border-line text-ink-soft' => ! $active])>
+                            <a href="{{ route($item['route']) }}" data-ripple @class(['flex items-center gap-2.5 rounded-xl border px-3 py-3 text-sm font-semibold', 'border-brand-200 bg-brand-50 text-brand-800' => $active, 'border-line text-ink-soft' => ! $active])>
                                 <x-icon :name="$item['icon']" class="size-[1.125rem] shrink-0 {{ $active ? 'text-brand-700' : 'text-muted' }}" />
                                 <span class="truncate">{{ $item['label'] }}</span>
                             </a>

@@ -1,3 +1,5 @@
+import { setupInteractions } from './interactions';
+
 /*
  | Alpine ships with Livewire. Components are registered on alpine:init so they
  | work on every page, with or without a Livewire component present.
@@ -42,6 +44,70 @@ document.addEventListener('alpine:init', () => {
             setTimeout(() => (this.shared = false), 1800);
         },
     }));
+
+    // Drag a bottom sheet down to close it (phones only), like native sheets.
+    Alpine.directive('swipe-dismiss', (el, { expression }, { evaluate, cleanup }) => {
+        let startY = null;
+        let lastY = 0;
+        let startTime = 0;
+        const mobile = () => window.matchMedia('(max-width: 639px)').matches;
+        const scrolledInside = (target) => {
+            for (let node = target; node && node !== el.parentElement; node = node.parentElement) {
+                if (node.scrollTop > 0) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        const onStart = (event) => {
+            if (!mobile() || event.touches.length !== 1 || scrolledInside(event.target)) {
+                startY = null;
+                return;
+            }
+            startY = lastY = event.touches[0].clientY;
+            startTime = Date.now();
+        };
+        const onMove = (event) => {
+            if (startY === null) {
+                return;
+            }
+            lastY = event.touches[0].clientY;
+            const dy = Math.max(0, lastY - startY);
+            el.style.transition = 'none';
+            el.style.transform = `translateY(${dy}px)`;
+        };
+        const onEnd = () => {
+            if (startY === null) {
+                return;
+            }
+            const dy = lastY - startY;
+            const fast = dy > 40 && dy / Math.max(1, Date.now() - startTime) > 0.6;
+            startY = null;
+            el.style.transition = 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)';
+            if (dy > 110 || fast) {
+                el.style.transform = 'translateY(100%)';
+                evaluate(expression);
+                setTimeout(() => {
+                    el.style.transition = '';
+                    el.style.transform = '';
+                }, 320);
+            } else {
+                el.style.transform = '';
+            }
+        };
+
+        el.addEventListener('touchstart', onStart, { passive: true });
+        el.addEventListener('touchmove', onMove, { passive: true });
+        el.addEventListener('touchend', onEnd);
+        el.addEventListener('touchcancel', onEnd);
+        cleanup(() => {
+            el.removeEventListener('touchstart', onStart);
+            el.removeEventListener('touchmove', onMove);
+            el.removeEventListener('touchend', onEnd);
+            el.removeEventListener('touchcancel', onEnd);
+        });
+    });
 
     // Network status for the offline banner.
     Alpine.store('network', {
@@ -120,6 +186,8 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 });
+
+setupInteractions();
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
     window.addEventListener('load', () => {

@@ -9,7 +9,7 @@
     ];
     [$classes, $defaultIcon] = $map[$tone] ?? $map['info'];
 @endphp
-<div role="{{ in_array($tone, ['danger', 'warning']) ? 'alert' : 'status' }}" {{ $attributes->class("flex gap-3 rounded-[var(--radius-control)] border px-4 py-3 text-sm $classes") }}>
+<div role="{{ in_array($tone, ['danger', 'warning']) ? 'alert' : 'status' }}" {{ $attributes->class("animate-pop flex gap-3 rounded-[var(--radius-control)] border px-4 py-3 text-sm $classes") }}>
     <x-icon :name="$icon ?? $defaultIcon" class="mt-0.5 size-[1.125rem] shrink-0" />
     <div class="min-w-0 text-ink-soft">
         @if ($title)<p class="font-bold text-current">{{ $title }}</p>@endif

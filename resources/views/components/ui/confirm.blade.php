@@ -5,7 +5,7 @@
     <template x-teleport="body">
         <div x-show="open" x-cloak class="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-6" role="alertdialog" aria-modal="true" x-on:keydown.escape.window="open = false">
             <div x-show="open" x-transition.opacity class="absolute inset-0 bg-brand-950/40" x-on:click="open = false"></div>
-            <form method="POST" action="{{ $action }}" x-show="open" x-trap.noscroll="open" x-transition:enter="transition duration-200 ease-out" x-transition:enter-start="opacity-0 translate-y-6 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-data="submitting" x-on:submit="submit"
+            <form method="POST" action="{{ $action }}" x-show="open" x-trap.noscroll="open" x-swipe-dismiss="open = false" x-transition:enter="transition duration-200 ease-out" x-transition:enter-start="opacity-0 translate-y-6 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-data="submitting" x-on:submit="submit"
                   class="relative w-full max-w-md rounded-t-[1.5rem] bg-surface p-6 pb-safe shadow-[var(--shadow-raised)] sm:rounded-[1.25rem] sm:pb-6">
                 @csrf
                 @if (strtoupper($method) !== 'POST')

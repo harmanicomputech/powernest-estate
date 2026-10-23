@@ -28,17 +28,20 @@
     $iconClass = $size === 'sm' ? 'size-4' : 'size-[1.125rem]';
 @endphp
 @if ($href)
-    <a href="{{ $href }}" {{ $attributes->class($classes) }}>
-        @if ($icon)<x-icon :name="$icon" :class="$iconClass" />@endif
+    <a href="{{ $href }}" data-ripple {{ $attributes->class($classes) }}>
+        <x-icon name="loader" class="btn-spinner {{ $iconClass }} animate-spin" />
+        @if ($icon)<x-icon :name="$icon" class="btn-icon {{ $iconClass }}" />@endif
         {{ $slot }}
         @if ($iconRight)<x-icon :name="$iconRight" :class="$iconClass" />@endif
     </a>
 @else
-    <button type="{{ $type }}" {{ $attributes->class($classes) }} @if($busy) x-bind:disabled="busy" @endif>
+    <button type="{{ $type }}" data-ripple @if($variant === 'primary' || $variant === 'gold') data-haptic @endif {{ $attributes->class($classes) }} @if($busy) x-bind:disabled="busy" @endif>
         @if ($busy)
             <x-icon name="loader" class="{{ $iconClass }} animate-spin" x-show="busy" x-cloak />
+        @elseif ($type === 'submit')
+            <x-icon name="loader" class="btn-spinner {{ $iconClass }} animate-spin" />
         @endif
-        @if ($icon)<x-icon :name="$icon" :class="$iconClass" x-show="{{ $busy ? '!busy' : 'true' }}" />@endif
+        @if ($icon)<x-icon :name="$icon" class="btn-icon {{ $iconClass }}" x-show="{{ $busy ? '!busy' : 'true' }}" />@endif
         {{ $slot }}
         @if ($iconRight)<x-icon :name="$iconRight" :class="$iconClass" />@endif
     </button>

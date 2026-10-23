@@ -89,6 +89,7 @@
 @layer base {
     html {
         -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
         text-rendering: optimizeLegibility;
         -webkit-font-smoothing: antialiased;
     }
@@ -153,6 +154,13 @@
         @apply border-danger focus:shadow-[0_0_0_4px_rgb(180_35_24/0.14)];
     }
 
+    /* Phones zoom into any field under 16px; keep inputs at 16px on small screens. */
+    @media (max-width: 639px) {
+        .control {
+            font-size: 1rem;
+        }
+    }
+
     .tnum {
         font-variant-numeric: tabular-nums;
     }
@@ -173,6 +181,234 @@
     }
 }
 
+/*
+ | Touch feedback (see resources/js/interactions.js). Unlayered on purpose so the shared
+ | transition and press styles apply on top of per-element utility classes.
+ */
+:where(a[href], button, [role='button'], summary, label[for]) {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform, translate, scale;
+    transition-duration: 180ms;
+    transition-timing-function: var(--ease-out-soft);
+}
+
+@media (pointer: coarse) {
+    :where(button, [role='button'], nav a, [data-ripple]) {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
+}
+
+.is-pressed {
+    scale: 0.96;
+    transition-duration: 60ms;
+}
+
+.card.is-pressed,
+[data-press='soft'].is-pressed {
+    scale: 0.985;
+}
+
+[data-press='tint'].is-pressed {
+    scale: 1;
+    background-color: var(--color-sunken);
+}
+
+[data-ripple] {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.ripple {
+    position: absolute;
+    z-index: -1;
+    border-radius: 9999px;
+    background: currentColor;
+    opacity: 0.16;
+    transform: scale(0);
+    pointer-events: none;
+    animation: ripple 560ms var(--ease-out-soft) forwards;
+}
+
+@keyframes ripple {
+    to {
+        transform: scale(1);
+        opacity: 0;
+    }
+}
+
+/* Loading: tapped link/button shows progress and ignores further taps. */
+.is-loading,
+[data-loading] {
+    pointer-events: none;
+}
+
+a.is-loading:not([data-ripple]) {
+    opacity: 0.7;
+}
+
+.btn-spinner {
+    display: none;
+}
+
+.is-loading > .btn-spinner,
+[data-loading] > .btn-spinner {
+    display: inline-block;
+}
+
+.is-loading > .btn-icon,
+[data-loading] > .btn-icon {
+    display: none;
+}
+
+[data-ripple].is-loading::after,
+[data-ripple][data-loading]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 0.28) 50%, transparent 80%);
+    background-size: 200% 100%;
+    animation: sweep 1.1s linear infinite;
+}
+
+@keyframes sweep {
+    from {
+        background-position: 150% 0;
+    }
+    to {
+        background-position: -50% 0;
+    }
+}
+
+#nav-progress {
+    position: fixed;
+    top: env(safe-area-inset-top);
+    left: 0;
+    z-index: 200;
+    height: 3px;
+    width: 100%;
+    transform: scaleX(0);
+    transform-origin: left;
+    opacity: 0;
+    pointer-events: none;
+    background: linear-gradient(90deg, var(--color-gold-300), var(--color-brand-400));
+    box-shadow: 0 0 10px rgb(212 168 67 / 0.6);
+}
+
+#nav-progress.is-active {
+    opacity: 1;
+    animation: trickle 9s cubic-bezier(0.08, 0.7, 0.2, 1) forwards;
+}
+
+#nav-progress.is-done {
+    animation: none;
+    transform: scaleX(1);
+    opacity: 0;
+    transition: transform 200ms ease-out, opacity 300ms 150ms;
+}
+
+@keyframes trickle {
+    0% {
+        transform: scaleX(0);
+    }
+    10% {
+        transform: scaleX(0.35);
+    }
+    100% {
+        transform: scaleX(0.94);
+    }
+}
+
+/* Page entrance: sections rise in one after another. */
+.page-enter > *,
+.page-enter :is(.grid, .stagger) > * {
+    animation: fade-up 0.5s var(--ease-out-soft) backwards;
+}
+
+.page-enter > :nth-child(2),
+.page-enter :is(.grid, .stagger) > :nth-child(2) {
+    animation-delay: 50ms;
+}
+
+.page-enter > :nth-child(3),
+.page-enter :is(.grid, .stagger) > :nth-child(3) {
+    animation-delay: 100ms;
+}
+
+.page-enter > :nth-child(4),
+.page-enter :is(.grid, .stagger) > :nth-child(4) {
+    animation-delay: 150ms;
+}
+
+.page-enter > :nth-child(5),
+.page-enter :is(.grid, .stagger) > :nth-child(5) {
+    animation-delay: 200ms;
+}
+
+.page-enter > :nth-child(n + 6),
+.page-enter :is(.grid, .stagger) > :nth-child(n + 6) {
+    animation-delay: 250ms;
+}
+
+/* Cross-page transitions (browsers that support them); app chrome stays put. */
+@view-transition {
+    navigation: auto;
+}
+
+::view-transition-old(root) {
+    animation: vt-out 160ms ease-in both;
+}
+
+::view-transition-new(root) {
+    animation: vt-in 260ms var(--ease-out-soft) both;
+}
+
+@keyframes vt-out {
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes vt-in {
+    from {
+        opacity: 0;
+    }
+}
+
+.app-topbar {
+    view-transition-name: topbar;
+    transition: box-shadow 200ms;
+}
+
+.app-bottombar {
+    view-transition-name: bottombar;
+    transition: transform 220ms var(--ease-out-soft);
+}
+
+.app-sidebar {
+    view-transition-name: sidebar;
+}
+
+.is-scrolled .app-topbar {
+    box-shadow: 0 8px 24px -14px rgb(16 40 30 / 0.35);
+}
+
+@media (max-width: 1023px) {
+    .is-typing .app-bottombar {
+        transform: translateY(110%);
+    }
+}
+
+.app-bottombar a.is-pressed svg {
+    scale: 0.82;
+}
+
+.app-bottombar [aria-current='page'] .nav-pill {
+    animation: pop 0.35s var(--ease-out-soft) both;
+}
+
 @utility pb-safe {
     padding-bottom: max(env(safe-area-inset-bottom), 0px);
 }
@@ -189,5 +425,13 @@
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
+    }
+
+    @view-transition {
+        navigation: none;
+    }
+
+    .is-pressed {
+        scale: 1;
     }
 }

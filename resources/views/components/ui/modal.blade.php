@@ -3,7 +3,7 @@
     <template x-teleport="body">
         <div x-show="open" x-cloak class="fixed inset-0 z-[70] flex items-end justify-center sm:items-center sm:p-6" role="dialog" aria-modal="true" @if($title) aria-label="{{ $title }}" @endif>
             <div x-show="open" x-transition.opacity.duration.200ms class="absolute inset-0 bg-brand-950/40 backdrop-blur-[2px]" x-on:click="open = false"></div>
-            <div x-show="open" x-trap.noscroll.inert="open"
+            <div x-show="open" x-trap.noscroll.inert="open" x-swipe-dismiss="open = false"
                  x-transition:enter="transition ease-[var(--ease-out-soft)] duration-300" x-transition:enter-start="translate-y-8 opacity-0 sm:translate-y-0 sm:scale-95" x-transition:enter-end="translate-y-0 opacity-100 sm:scale-100"
                  x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                  class="relative w-full {{ $maxWidth }} rounded-t-[1.5rem] bg-surface p-6 pb-safe shadow-[var(--shadow-raised)] sm:rounded-[1.25rem] sm:pb-6">
