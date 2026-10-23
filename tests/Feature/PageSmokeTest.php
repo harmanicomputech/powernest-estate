@@ -8,6 +8,7 @@ use App\Models\Incident;
 use App\Models\Invoice;
 use App\Models\MaintenanceRequest;
 use App\Models\Payment;
+use App\Models\PaymentSubmission;
 use App\Models\PowerPurchase;
 use App\Models\Property;
 use App\Models\User;
@@ -34,12 +35,12 @@ class PageSmokeTest extends TestCase
 
         $common = ['/app', '/app/announcements', '/notifications', '/account'];
         $pages = [
-            'resident@powernest.test' => [...$common, '/app/home', '/app/visitors', '/app/visitors?tab=history', '/app/visitors/new', '/app/visitors/'.$pass->id, '/app/power', '/app/power/buy', '/app/power/history', '/app/power/purchases/'.$purchase->reference, '/app/bills', '/app/maintenance', '/app/maintenance/new', '/app/facilities', '/app/facilities/bookings', '/app/facilities/'.Facility::first()->id, '/app/incidents', '/app/incidents/new', '/app/lost-found'],
+            'resident@powernest.test' => [...$common, '/app/home', '/app/visitors', '/app/visitors?tab=history', '/app/visitors/new', '/app/visitors/'.$pass->id, '/app/power', '/app/power/buy', '/app/power/history', '/app/power/purchases/'.$purchase->reference, '/app/bills', '/app/maintenance', '/app/maintenance/new', '/app/facilities', '/app/facilities/bookings', '/app/facilities/'.Facility::first()->id, '/app/incidents', '/app/incidents/new', '/app/lost-found', '/app/transactions', '/app/transactions?tab=invoices', '/app/transactions?tab=electricity'],
             'guard@powernest.test' => [...$common, '/app/inspections', '/app/lost-found', '/app/gate', '/app/gate/expected', '/app/gate/inside', '/app/gate/walk-in', '/app/incidents', '/app/tasks'],
             'supervisor@powernest.test' => [...$common, '/app/gate', '/app/manage/visits', '/app/incidents', '/app/incidents/'.Incident::first()->reference, '/app/tasks'],
             'facility@powernest.test' => [...$common, '/app/maintenance', '/app/maintenance?tab=overdue', '/app/maintenance/'.MaintenanceRequest::first()->reference, '/app/manage/assets', '/app/manage/bookings', '/app/manage/expenses', '/app/tasks'],
             'tech@powernest.test' => [...$common, '/app/maintenance', '/app/maintenance?tab=mine', '/app/tasks'],
-            'finance@powernest.test' => [...$common, '/app/manage/billing', '/app/manage/billing/invoices', '/app/manage/billing/invoices?status=paid', '/app/manage/billing/invoices/new', '/app/bills/'.$invoice->number, '/app/payments/'.$payment->reference.'/receipt', '/app/manage/power', '/app/manage/power?status=issued', '/app/manage/power/'.$purchase->reference, '/app/manage/expenses', '/app/manage/support', '/app/manage/reports'],
+            'finance@powernest.test' => [...$common, '/app/manage/billing', '/app/manage/billing/invoices', '/app/manage/billing/invoices?status=paid', '/app/manage/billing/invoices/new', '/app/bills/'.$invoice->number, '/app/payments/'.$payment->reference.'/receipt', '/app/manage/power', '/app/manage/power?status=issued', '/app/manage/power/'.$purchase->reference, '/app/manage/expenses', '/app/manage/support', '/app/manage/reports', '/app/manage/billing/receipts', '/app/manage/billing/receipts?status=approved', '/app/manage/billing/receipts/'.PaymentSubmission::where('status', 'pending')->value('reference')],
             'manager@powernest.test' => [...$common, '/app/manage/properties', '/app/manage/properties/new', '/app/manage/properties/'.Property::first()->id, '/app/manage/residents', '/app/manage/members', '/app/manage/members?tab=invitations', '/app/manage/members?tab=requests', '/app/manage/visits', '/app/manage/power', '/app/manage/billing', '/app/manage/reports', '/app/manage/audit', '/app/manage/settings', '/app/announcements/new', '/app/gate'],
             'platform@powernest.test' => ['/platform', '/platform/estates/create', '/platform/estates/'.Estate::first()->id, '/onboarding'],
         ];

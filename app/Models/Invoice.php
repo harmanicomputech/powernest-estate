@@ -68,6 +68,11 @@ class Invoice extends Model
         return $this->hasMany(PaymentAllocation::class);
     }
 
+    public function submissions(): HasMany
+    {
+        return $this->hasMany(PaymentSubmission::class);
+    }
+
     public function balance(): int
     {
         return max(0, $this->total - $this->amount_paid);

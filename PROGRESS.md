@@ -27,8 +27,11 @@ _Last updated: 2026-10-23_
 | Facility booking fees billed as estate invoices; voided on cancellation | Tested |
 | Property document library (private storage, shared/internal visibility) | Tested |
 | Data retention pruning for visits, pass scans, expired passes, webhook payloads | Tested |
+| Yearly estate management & security levy with "paid for the year" status on the resident dashboard | Tested |
+| Offline payments: residents upload a receipt; finance verifies, approves (any amount up to balance) or rejects with a reason; four-eyes enforced | Tested |
+| Transactions page (estate payments, receipts under review, electricity) and PDF downloads for invoices, payment receipts and electricity receipts | Tested |
 
-**Tests:** 82 tests / 381 assertions passing on SQLite and on MariaDB (`php artisan test`).
+**Tests:** 88 tests / 442 assertions passing on SQLite and on MariaDB (`php artisan test`).
 
 ## Outstanding / not yet built
 

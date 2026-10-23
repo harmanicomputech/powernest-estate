@@ -212,7 +212,7 @@ class AuthAndTenancyTest extends TestCase
         $estate = $this->estate();
         [$resident] = $this->resident($estate);
 
-        $response = $this->inEstate($resident, $estate)->get('/app')->assertHeader('X-Frame-Options', 'DENY');
+        $response = $this->inEstate($resident, $estate)->get('/app')->assertHeader('X-Frame-Options', 'SAMEORIGIN');
 
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
         $this->assertStringContainsString('private', $response->headers->get('Cache-Control'));

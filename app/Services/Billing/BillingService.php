@@ -120,10 +120,10 @@ class BillingService
 
             try {
                 $this->issueInvoice($estate, $property, [[
-                    'description' => $chargeType->name.' · '.$periodStart->format('M Y'),
+                    'description' => $chargeType->name.' · '.$this->periodLabel($chargeType, $periodStart, $periodEnd, short: true),
                     'quantity' => 1,
                     'unit_amount' => $chargeType->amount,
-                ]], $chargeType->name.' for '.$periodStart->format('F Y'), $dueDate, $actor, $chargeType, $periodStart, $periodEnd);
+                ]], $chargeType->name.' for '.$this->periodLabel($chargeType, $periodStart, $periodEnd), $dueDate, $actor, $chargeType, $periodStart, $periodEnd);
                 $stats['issued']++;
             } catch (QueryException) {
                 $stats['skipped']++;
@@ -298,6 +298,15 @@ class BillingService
         $row = LedgerEntry::where('property_id', $property->id)->selectRaw('COALESCE(SUM(debit),0) as d, COALESCE(SUM(credit),0) as c')->first();
 
         return (int) $row->d - (int) $row->c;
+    }
+
+    private function periodLabel(ChargeType $chargeType, Carbon $start, Carbon $end, bool $short = false): string
+    {
+        return match ($chargeType->frequency) {
+            'annual' => $start->month === 1 ? (string) $start->year : $start->format('M Y').' – '.$end->format('M Y'),
+            'quarterly' => $start->format('M').' – '.$end->format('M Y'),
+            default => $start->format($short ? 'M Y' : 'F Y'),
+        };
     }
 
     private function statusFor(Invoice $invoice): InvoiceStatus

@@ -36,6 +36,7 @@ use App\Models\User;
 use App\Models\Vendor;
 use App\Models\Visit;
 use App\Services\Billing\BillingService;
+use App\Services\Billing\PaymentSubmissionService;
 use App\Services\Estate\OccupancyService;
 use App\Services\Operations\IncidentService;
 use App\Services\Operations\InspectionService;
@@ -44,6 +45,7 @@ use App\Services\Visitors\GateService;
 use App\Services\Visitors\PassService;
 use App\Support\Reference;
 use Illuminate\Database\Seeder;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use RuntimeException;
 
@@ -334,6 +336,27 @@ class DemoSeeder extends Seeder
             }
         }
 
+        // Yearly estate management & security levy: some paid online/offline, some receipts awaiting review.
+        $levy = ChargeType::create(['estate_id' => $this->estate->id, 'name' => 'Estate management & security levy', 'code' => 'LEVY', 'amount' => 25_000_000, 'frequency' => 'annual']);
+        $yearStart = now($tz)->startOfYear();
+        $this->travel($yearStart->copy()->addDays(2)->setTime(9, 0)->utc(), fn () => $billing->runCharge($levy, $yearStart, $yearStart->copy()->endOfYear(), $yearStart->copy()->addMonth(), $finance));
+        $submissions = app(PaymentSubmissionService::class);
+        Invoice::where('charge_type_id', $levy->id)->with('property', 'estate')->orderBy('id')->get()->each(function ($invoice, $i) use ($billing, $finance, $submissions) {
+            $resident = Occupancy::where('property_id', $invoice->property_id)->where('status', 'active')->where('is_primary', true)->first()?->user;
+            if (! $resident || $i % 5 === 4) {
+                return; // left unpaid
+            }
+            if ($i % 5 === 0 || $i % 5 === 3) {
+                $submission = $submissions->submit($resident, $invoice, ['amount' => $invoice->total, 'method' => 'bank_transfer', 'payer_reference' => 'DEMO-'.str_pad((string) $i, 6, '0', STR_PAD_LEFT), 'paid_on' => now()->subDays(3)->toDateString()], $this->demoReceipt($resident->name, $invoice->total));
+                if ($i % 5 === 0) {
+                    $submissions->approve($submission, $finance, null, 'Matched on bank statement (demo)');
+                }
+
+                return; // i%5==3 stays pending for the admin queue
+            }
+            $billing->recordManualPayment($invoice, $invoice->total, 'bank_transfer', 'DEMO-LEVY-'.$i, now()->subDays(20), $finance);
+        });
+
         $diesel = Vendor::create(['estate_id' => $this->estate->id, 'name' => 'Ikeja Diesel Supplies', 'service_category' => 'utilities', 'phone' => '08055556666']);
         $guards = Vendor::create(['estate_id' => $this->estate->id, 'name' => 'Shield Guard Services Ltd', 'service_category' => 'security']);
         $clean = Vendor::create(['estate_id' => $this->estate->id, 'name' => 'Sparkle Cleaning Co.', 'service_category' => 'cleaning']);
@@ -427,5 +450,26 @@ class DemoSeeder extends Seeder
         } finally {
             Carbon::setTestNow();
         }
+    }
+
+    /**
+     * A generated, clearly-labelled demo "bank receipt" image for seeded offline payment submissions.
+     */
+    private function demoReceipt(string $name, int $kobo): UploadedFile
+    {
+        $image = imagecreatetruecolor(600, 360);
+        imagefill($image, 0, 0, imagecolorallocate($image, 250, 250, 247));
+        $ink = imagecolorallocate($image, 27, 31, 29);
+        $green = imagecolorallocate($image, 21, 70, 52);
+        imagefilledrectangle($image, 0, 0, 600, 56, $green);
+        imagestring($image, 5, 20, 20, 'DEMO BANK - TRANSFER RECEIPT', imagecolorallocate($image, 255, 255, 255));
+        foreach (['Sender: '.$name, 'Beneficiary: Greenfield Court Estate', 'Amount: NGN '.number_format(intdiv($kobo, 100)), 'Status: Successful', 'Date: '.now()->subDays(3)->format('d M Y'), '', 'DEMO DATA - NOT A REAL RECEIPT'] as $line => $text) {
+            imagestring($image, 4, 24, 80 + $line * 34, $text, $ink);
+        }
+        $path = tempnam(sys_get_temp_dir(), 'rcpt').'.png';
+        imagepng($image, $path);
+        imagedestroy($image);
+
+        return new UploadedFile($path, 'transfer-receipt.png', 'image/png', null, true);
     }
 }

@@ -10,6 +10,14 @@
         <x-ui.stat label="Collected this month" :value="money($collected, false)" icon="banknote" tone="gold" class="col-span-2 lg:col-span-1" />
     </div>
 
+    @if ($pendingReceipts)
+        <a href="{{ route('manage.billing.submissions.index') }}" class="mt-6 flex items-center gap-3 rounded-[var(--radius-card)] border border-[#c6d8f2] bg-info-soft p-4">
+            <span class="grid size-10 place-items-center rounded-xl bg-white text-info"><x-icon name="file-check" class="size-5" /></span>
+            <span class="flex-1 font-semibold">{{ $pendingReceipts }} offline payment receipt(s) waiting for verification</span>
+            <x-icon name="chevron-right" class="size-5 text-info" />
+        </a>
+    @endif
+
     @if ($adjustments->isNotEmpty())
         <x-ui.card title="Discounts & waivers awaiting approval" class="mt-6" :padded="false">
             @foreach ($adjustments as $adjustment)
@@ -41,7 +49,7 @@
                     <div class="min-w-0 flex-1"><p class="font-semibold">{{ $type->name }} <span class="font-mono text-xs text-muted">{{ $type->code }}</span></p><p class="text-sm text-muted">{{ money($type->amount) }} · {{ humanize($type->frequency) }} · {{ $type->invoices_count }} invoices</p></div>
                     <x-ui.button type="button" size="sm" x-on:click="open = !open">Run</x-ui.button>
                     <form x-show="open" x-cloak method="POST" action="{{ route('manage.billing.charge-types.run', $type) }}" class="grid w-full grid-cols-3 gap-2">@csrf
-                        <x-ui.input name="period" type="month" :value="now()->format('Y-m')" required />
+                        <x-ui.input name="period" type="month" :value="$type->frequency === 'annual' ? now()->startOfYear()->format('Y-m') : now()->format('Y-m')" required />
                         <x-ui.input name="due_date" type="date" :value="now()->addDays(14)->toDateString()" required />
                         <x-ui.button size="sm" class="self-end">Issue invoices</x-ui.button>
                         <p class="col-span-3 text-xs text-muted">Bills every occupied property once per period. Re-running skips properties already billed.</p>

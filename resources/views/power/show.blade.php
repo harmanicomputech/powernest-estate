@@ -29,8 +29,11 @@
                     'Paid at' => $purchase->paid_at ? local_time($purchase->paid_at) : null,
                     'Created' => local_time($purchase->created_at),
                 ]" />
+                @if ($purchase->status->isPaymentConfirmed())
+                    <x-ui.button :href="route('pdf.purchase', $purchase)" variant="secondary" class="mt-5 w-full" icon="download">Download receipt (PDF)</x-ui.button>
+                @endif
                 @if ($purchase->token && $purchase->user_id === auth()->id())
-                    <form method="POST" action="{{ route('power.purchases.resend', $purchase) }}" class="mt-5">@csrf
+                    <form method="POST" action="{{ route('power.purchases.resend', $purchase) }}" class="mt-2">@csrf
                         <x-ui.button variant="secondary" class="w-full" icon="mail">Email me this token</x-ui.button>
                     </form>
                 @endif

@@ -1,5 +1,7 @@
 <x-layouts.app title="Bills & payments">
-    <x-ui.page-header title="Bills & payments" description="Estate service charges and other invoices for your property. Electricity purchases are kept separately." />
+    <x-ui.page-header title="Bills & payments" description="Estate service charges and other invoices for your property. Electricity purchases are kept separately.">
+        <x-ui.button :href="route('transactions.index')" variant="secondary" icon="history">Transaction history</x-ui.button>
+    </x-ui.page-header>
 
     <div class="grid gap-4 sm:grid-cols-3">
         <div class="relative overflow-hidden rounded-[var(--radius-card)] bg-brand-900 p-6 text-white sm:col-span-2">

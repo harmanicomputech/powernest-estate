@@ -17,6 +17,6 @@ class DocumentController extends Controller
             'Content-Type' => $document->mime_type,
             'Cache-Control' => 'private, no-store',
             'X-Content-Type-Options' => 'nosniff',
-        ], $document->isImage() ? 'inline' : 'attachment');
+        ], $document->isImage() || $document->mime_type === 'application/pdf' ? 'inline' : 'attachment');
     }
 }

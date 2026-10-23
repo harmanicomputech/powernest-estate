@@ -9,6 +9,7 @@ use App\Enums\MaintenanceStatus;
 use App\Enums\PassStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PowerPurchaseStatus;
+use App\Enums\SubmissionStatus;
 use App\Enums\VisitStatus;
 use App\Models\Announcement;
 use App\Models\Asset;
@@ -27,6 +28,7 @@ use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitorPass;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 /**
  * Database-backed dashboard figures. No sample or placeholder numbers.
@@ -48,8 +50,42 @@ class DashboardMetrics
             'openRequests' => MaintenanceRequest::forEstate($estate)->where('requested_by', $user->id)->whereNotIn('status', ['closed', 'cancelled'])->latest()->limit(3)->get(),
             'announcements' => Announcement::forEstate($estate)->whereNotNull('published_at')->where('audience', 'estate')->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))->orderByDesc('is_pinned')->latest('published_at')->limit(3)->get(),
             'bookings' => Booking::forEstate($estate)->where('user_id', $user->id)->whereIn('status', [BookingStatus::Pending->value, BookingStatus::Approved->value])->where('ends_at', '>=', now())->with('facility')->orderBy('starts_at')->limit(2)->get(),
+            'annualDues' => $this->annualDues($estate, $propertyIds),
             'recentVisits' => Visit::forEstate($estate)->whereIn('property_id', $propertyIds)->whereNotNull('checked_in_at')->latest('checked_in_at')->limit(4)->get(),
         ];
+    }
+
+    /**
+     * Status of each yearly charge (e.g. estate management & security levy) for the current year.
+     *
+     * @param  Collection<int, int>  $propertyIds
+     * @return list<array{name: string, year: string, property: string, state: string, invoice: Invoice}>
+     */
+    public function annualDues(Estate $estate, $propertyIds): array
+    {
+        $today = now($estate->timezone())->toDateString();
+
+        return Invoice::forEstate($estate)
+            ->whereIn('property_id', $propertyIds)
+            ->where('status', '!=', InvoiceStatus::Void->value)
+            ->whereHas('chargeType', fn ($q) => $q->where('frequency', 'annual'))
+            ->whereDate('period_start', '<=', $today)
+            ->whereDate('period_end', '>=', $today)
+            ->with('chargeType', 'property', 'submissions')
+            ->get()
+            ->map(fn (Invoice $invoice) => [
+                'name' => $invoice->chargeType->name,
+                'year' => $invoice->period_start->year === $invoice->period_end->year ? (string) $invoice->period_start->year : $invoice->period_start->format('M Y').' – '.$invoice->period_end->format('M Y'),
+                'property' => $invoice->property->identifier,
+                'state' => match (true) {
+                    $invoice->status === InvoiceStatus::Paid => 'paid',
+                    $invoice->submissions->contains(fn ($s) => $s->status === SubmissionStatus::Pending) => 'under_review',
+                    default => 'outstanding',
+                },
+                'invoice' => $invoice,
+            ])
+            ->values()
+            ->all();
     }
 
     public function security(Estate $estate): array

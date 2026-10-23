@@ -1,6 +1,6 @@
 <x-layouts.app title="Receipt">
     <x-ui.page-header title="Payment receipt" :back="$payment->invoice ? route('bills.show', $payment->invoice) : route('bills.index')">
-        <x-ui.button type="button" variant="secondary" icon="download" onclick="window.print()">Print</x-ui.button>
+        <x-ui.button :href="route('pdf.payment', $payment)" variant="secondary" icon="download">Download PDF</x-ui.button>
     </x-ui.page-header>
     <div class="mx-auto max-w-lg">
         @if ($payment->status === \App\Enums\PaymentStatus::Reversed)

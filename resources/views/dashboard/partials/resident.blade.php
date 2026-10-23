@@ -13,6 +13,38 @@
         </a>
     @endforeach
 
+    @foreach ($data['annualDues'] as $due)
+        @php $invoice = $due['invoice']; @endphp
+        @if ($due['state'] === 'paid')
+            <div class="flex items-center gap-4 rounded-[var(--radius-card)] border border-[#bfe5cf] bg-success-soft p-4">
+                <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-white text-success"><x-icon name="badge-check" class="size-6" /></span>
+                <div class="min-w-0 flex-1">
+                    <p class="font-bold text-ink">{{ $due['name'] }} — paid for {{ $due['year'] }}</p>
+                    <p class="text-sm text-ink-soft">{{ $due['property'] }} · thank you, you're covered for the year.</p>
+                </div>
+                <a href="{{ route('pdf.invoice', $invoice) }}" class="text-sm font-semibold text-success hover:underline">Invoice</a>
+            </div>
+        @elseif ($due['state'] === 'under_review')
+            <a href="{{ route('bills.show', $invoice) }}" class="flex items-center gap-4 rounded-[var(--radius-card)] border border-[#c6d8f2] bg-info-soft p-4">
+                <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-white text-info"><x-icon name="file-check" class="size-5" /></span>
+                <div class="min-w-0 flex-1">
+                    <p class="font-bold text-ink">{{ $due['name'] }} {{ $due['year'] }} — receipt under review</p>
+                    <p class="text-sm text-ink-soft">The estate office is verifying your offline payment.</p>
+                </div>
+                <x-icon name="chevron-right" class="size-5 text-info" />
+            </a>
+        @else
+            <a href="{{ route('bills.show', $invoice) }}" class="flex items-center gap-4 rounded-[var(--radius-card)] border border-[#f3d9a8] bg-warning-soft p-4">
+                <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-white text-warning"><x-icon name="shield" class="size-5" /></span>
+                <div class="min-w-0 flex-1">
+                    <p class="font-bold text-ink">{{ $due['name'] }} {{ $due['year'] }} is due</p>
+                    <p class="text-sm text-ink-soft">{{ money($invoice->balance()) }} outstanding · pay online or upload your bank receipt.</p>
+                </div>
+                <span class="text-sm font-bold text-warning">Pay</span>
+            </a>
+        @endif
+    @endforeach
+
     {{-- Hero --}}
     <div class="relative overflow-hidden rounded-[1.5rem] bg-brand-900 p-5 text-white sm:p-7">
         <div class="pointer-events-none absolute -right-16 -top-24 size-72 rounded-full bg-brand-600/40 blur-3xl"></div>

@@ -9,6 +9,7 @@ use App\Models\ChargeType;
 use App\Models\Invoice;
 use App\Models\InvoiceAdjustment;
 use App\Models\Payment;
+use App\Models\PaymentSubmission;
 use App\Models\Property;
 use App\Notifications\InvoiceReminder;
 use App\Services\Audit\AuditLogger;
@@ -40,6 +41,7 @@ class BillingController extends Controller
             'chargeTypes' => ChargeType::forEstate($estate)->withCount('invoices')->orderBy('name')->get(),
             'adjustments' => InvoiceAdjustment::whereHas('invoice', fn ($q) => $q->where('estate_id', $estate->id))->where('status', 'pending')->with('invoice.property', 'requester')->get(),
             'recentPayments' => Payment::forEstate($estate)->where('status', PaymentStatus::Succeeded->value)->with('invoice', 'property')->latest('paid_at')->limit(8)->get(),
+            'pendingReceipts' => PaymentSubmission::forEstate($estate)->where('status', 'pending')->count(),
             'needsReview' => Payment::forEstate($estate)->where('status', PaymentStatus::Pending->value)->whereNotNull('notes')->with('invoice')->get(),
         ]);
     }
