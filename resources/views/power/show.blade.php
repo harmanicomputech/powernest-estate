@@ -20,7 +20,7 @@
                 <x-ui.dl :items="[
                     'Reference' => $purchase->reference,
                     'Meter' => $purchase->meter_number,
-                    'Property' => $purchase->meter->property->identifier,
+                    'Property' => $purchase->meter->vendor_address ?? $purchase->property?->identifier ?? '—',
                     'Electricity value' => money($purchase->vend_amount),
                     'Service charge' => money($purchase->service_charge),
                     'Total' => money($purchase->total_amount),

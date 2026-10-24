@@ -93,14 +93,56 @@ class PowerPurchaseFlowTest extends TestCase
         $this->assertSame(0, PowerPurchase::count());
     }
 
-    public function test_cannot_buy_for_a_meter_on_someone_elses_property(): void
+    public function test_can_buy_for_any_verified_meter_in_the_estate_but_not_unverified_or_foreign_ones(): void
     {
         [, $otherProperty] = $this->resident($this->estateModel);
-        $otherMeter = $this->meterFor($otherProperty);
+        $neighbourMeter = $this->meterFor($otherProperty);
+        $unverified = $this->meterFor($otherProperty);
+        $unverified->update(['validated_at' => null]);
+        $foreignEstate = $this->estate();
+        [, $foreignProperty] = $this->resident($foreignEstate);
+        $foreignMeter = $this->meterFor($foreignProperty);
+
+        $buy = fn ($meter) => $this->inEstate($this->resident, $this->estateModel)
+            ->post(route('power.purchases.store'), ['meter_id' => $meter->id, 'amount' => '5000', 'gateway' => 'paystack']);
+
+        $buy($neighbourMeter)->assertRedirect();
+        $this->assertSame(1, PowerPurchase::count());
+        $buy($unverified)->assertSessionHasErrors('meter_id');
+        $buy($foreignMeter)->assertNotFound();
+    }
+
+    public function test_entering_a_meter_number_checks_it_and_shows_the_details(): void
+    {
+        Http::fake(['stron.test/api/QueryMeterInfo' => Http::response([[
+            'Meter_id' => '58103812218', 'Customer_name' => 'Ndubuisi Oti', 'Customer_address' => '10C Amenam Street', 'Meter_type' => 'Energy Meter',
+        ]])]);
+
+        $this->inEstate($this->resident, $this->estateModel)->post(route('power.meters.store'), ['meter_number' => '5810 3812 218'])
+            ->assertRedirect();
+
+        $meter = Meter::where('meter_number', '58103812218')->firstOrFail();
+        $this->assertNull($meter->property_id);
+        $this->assertNotNull($meter->validated_at);
+
+        $this->inEstate($this->resident, $this->estateModel)->get(route('power.buy', ['meter' => $meter->id]))
+            ->assertOk()->assertSee('Ndubuisi Oti')->assertSee('10C Amenam Street')->assertSee('Continue to payment')->assertDontSee('Property');
 
         $this->inEstate($this->resident, $this->estateModel)
-            ->post(route('power.purchases.store'), ['meter_id' => $otherMeter->id, 'amount' => '5000', 'gateway' => 'paystack'])
-            ->assertSessionHasErrors('meter_id');
+            ->post(route('power.purchases.store'), ['meter_id' => $meter->id, 'amount' => '5000', 'gateway' => 'paystack'])->assertRedirect();
+        $this->assertNull(PowerPurchase::latest('id')->first()->property_id);
+        $this->inEstate($this->resident, $this->estateModel)->get(route('power.index'))->assertOk()->assertSee('58103812218');
+    }
+
+    public function test_unknown_meter_number_is_rejected_and_nothing_is_saved(): void
+    {
+        Http::fake(['stron.test/api/QueryMeterInfo' => Http::response([])]);
+
+        $this->inEstate($this->resident, $this->estateModel)->from(route('power.buy'))
+            ->post(route('power.meters.store'), ['meter_number' => '99999999999'])
+            ->assertRedirect(route('power.buy'))->assertSessionHasErrors('meter_number');
+
+        $this->assertFalse(Meter::where('meter_number', '99999999999')->exists());
     }
 
     public function test_successful_payment_then_vend_issues_exactly_one_token(): void

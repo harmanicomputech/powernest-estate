@@ -54,12 +54,13 @@ class PowerPurchaseService
     {
         abort_unless($user->hasEstatePermission($estate, Permission::PowerPurchase), 403);
 
+        // Any active meter in the estate that the vending service has verified can be topped up.
         $authorized = $meter->estate_id === $estate->id
             && $meter->status === 'active'
-            && $user->authorizedProperties($estate)->whereKey($meter->property_id)->exists();
+            && $meter->validated_at !== null;
 
         if (! $authorized) {
-            throw ValidationException::withMessages(['meter_id' => 'Choose a meter registered to your property.']);
+            throw ValidationException::withMessages(['meter_id' => 'Enter and check the meter number first.']);
         }
 
         $min = (int) $estate->setting('power.min_amount');

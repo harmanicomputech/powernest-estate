@@ -10,6 +10,7 @@ use App\Models\Meter;
 use App\Models\PowerPurchase;
 use App\Models\SupportTicket;
 use App\Notifications\PowerTokenIssued;
+use App\Services\Power\MeterService;
 use App\Services\Power\PowerPurchaseService;
 use App\Support\EstateContext;
 use App\Support\Money;
@@ -45,16 +46,18 @@ class PurchaseController extends Controller
     public function create(Request $request, GatewayManager $gateways): View
     {
         $estate = $this->context->estate();
-        $propertyIds = $request->user()->authorizedProperties($estate)->pluck('properties.id');
+        $user = $request->user();
+        $selected = $request->query('meter')
+            ? Meter::forEstate($estate)->where('status', 'active')->whereNotNull('validated_at')->with('property')->find((int) $request->query('meter'))
+            : null;
 
         return view('power.buy', [
-            'meters' => Meter::forEstate($estate)->whereIn('property_id', $propertyIds)->where('status', 'active')->with('property')->get(),
-            'selected' => (int) $request->query('meter'),
+            'selected' => $selected,
+            'meters' => app(MeterService::class)->savedFor($user, $estate),
             'gateways' => $gateways->availableFor($estate),
             'serviceCharge' => (int) $estate->setting('power.service_charge'),
             'min' => (int) $estate->setting('power.min_amount'),
             'max' => (int) $estate->setting('power.max_amount'),
-            'properties' => $request->user()->authorizedProperties($estate)->orderBy('identifier')->get(),
         ]);
     }
 

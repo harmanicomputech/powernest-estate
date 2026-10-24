@@ -14,22 +14,17 @@ class MeterController extends Controller
     public function store(Request $request, MeterService $meters, EstateContext $context): RedirectResponse
     {
         $data = $request->validate([
-            'property_id' => ['required', 'integer'],
-            'meter_number' => ['required', 'string', 'regex:/^[0-9 ]{8,20}$/'],
-            'label' => ['nullable', 'string', 'max:60'],
+            'meter_number' => ['required', 'string', 'regex:/^[0-9 -]{8,24}$/'],
         ], ['meter_number.regex' => 'Meter numbers are 8–20 digits.']);
 
-        $meter = $meters->register($request->user(), $context->estate(), (int) $data['property_id'], $data['meter_number'], $data['label'] ?? null);
+        $meter = $meters->lookup($request->user(), $context->estate(), $data['meter_number']);
 
-        return redirect()->route('power.buy', ['meter' => $meter->id])->with(
-            $meter->validated_at ? 'success' : 'warning',
-            $meter->validated_at ? "Meter {$meter->meter_number} verified".($meter->vendor_customer_name ? " for {$meter->vendor_customer_name}." : '.') : 'Meter saved. It could not be verified with the vending service right now.',
-        );
+        return redirect()->route('power.buy', ['meter' => $meter->id]);
     }
 
     public function favourite(Meter $meter, Request $request): RedirectResponse
     {
-        abort_unless($request->user()->authorizedProperties($meter->estate_id)->whereKey($meter->property_id)->exists(), 403);
+        abort_unless($meter->estate_id === app(EstateContext::class)->estate()->id, 404);
         $request->user()->favouriteMeters()->toggle([$meter->id]);
 
         return back();

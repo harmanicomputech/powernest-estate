@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Meter;
 use App\Models\PowerPurchase;
 use App\Notifications\PowerTokenIssued;
+use App\Services\Power\MeterService;
 use App\Services\Power\PowerPurchaseService;
 use App\Support\EstateContext;
 use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
@@ -26,10 +28,23 @@ class OfficeVendController extends Controller
     {
         $estate = $this->context->estate();
         $number = preg_replace('/\D/', '', (string) $request->query('meter'));
-        $meter = $number !== '' ? Meter::forEstate($estate)->where('meter_number', $number)->with('property.occupancies.user')->first() : null;
+        $meter = $number !== '' ? Meter::forEstate($estate)->where('meter_number', $number)->first() : null;
+        $lookupError = null;
+
+        // A meter not yet known to the estate is checked with the vending service and saved.
+        if ($number !== '' && ! $meter?->validated_at) {
+            try {
+                $meter = app(MeterService::class)->lookup($request->user(), $estate, $number);
+            } catch (ValidationException $exception) {
+                $lookupError = $exception->validator->errors()->first('meter_number');
+                $meter = null;
+            }
+        }
+        $meter?->load('property.occupancies.user');
 
         return view('manage.office-vend.create', [
             'number' => $number,
+            'lookupError' => $lookupError,
             'meter' => $meter,
             'owner' => $meter?->property?->occupancies->where('status', 'active')->sortByDesc('is_primary')->first()?->user,
             'recent' => PowerPurchase::forEstate($estate)->where('gateway', 'office')->with('user', 'issuer')->latest()->limit(8)->get(),

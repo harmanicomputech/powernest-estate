@@ -6,8 +6,10 @@ use App\Integrations\IntegrationException;
 use App\Integrations\Vending\ElectricityVendor;
 use App\Models\Estate;
 use App\Models\Meter;
+use App\Models\PowerPurchase;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 class MeterService
@@ -15,56 +17,61 @@ class MeterService
     public function __construct(private ElectricityVendor $vendor, private AuditLogger $audit) {}
 
     /**
-     * Registers a meter against a property the user is linked to. The vendor lookup is used when
-     * reachable; an unreachable vendor leaves the meter marked unverified (never faked as valid).
+     * Finds a meter in the estate by its number, checking it with the vending service the first time
+     * (or when it was never verified). Returns only verified meters: an unknown number or an
+     * unreachable vendor is reported to the user, never saved as valid. The meter is added to the
+     * user's saved meters so it appears next time.
      */
-    public function register(User $user, Estate $estate, int $propertyId, string $meterNumber, ?string $label): Meter
+    public function lookup(User $user, Estate $estate, string $meterNumber): Meter
     {
-        $property = $user->authorizedProperties($estate)->whereKey($propertyId)->first();
+        $meterNumber = preg_replace('/\D/', '', $meterNumber);
+        $meter = Meter::where('estate_id', $estate->id)->where('meter_number', $meterNumber)->first();
 
-        if (! $property) {
-            throw ValidationException::withMessages(['property_id' => 'Choose a property you are linked to.']);
+        if ($meter && $meter->status !== 'active') {
+            throw ValidationException::withMessages(['meter_number' => 'This meter has been disabled by the estate. Contact the estate office.']);
         }
 
-        $meterNumber = preg_replace('/\s+/', '', $meterNumber);
-        $existing = Meter::where('estate_id', $estate->id)->where('meter_number', $meterNumber)->first();
-
-        if ($existing && $existing->property_id !== $property->id) {
-            throw ValidationException::withMessages(['meter_number' => 'This meter is registered to another property. Contact estate management if this is wrong.']);
-        }
-
-        if ($existing) {
-            return $existing;
-        }
-
-        $info = null;
-        $verified = false;
-
-        try {
-            $info = $this->vendor->lookupMeter($meterNumber);
-
-            if ($info === null) {
-                throw ValidationException::withMessages(['meter_number' => 'This meter number was not recognised by the vending service.']);
+        if (! $meter?->validated_at) {
+            try {
+                $info = $this->vendor->lookupMeter($meterNumber);
+            } catch (IntegrationException) {
+                throw ValidationException::withMessages(['meter_number' => 'We could not reach the meter service to check this number. Please try again in a minute.']);
             }
 
-            $verified = true;
-        } catch (IntegrationException) {
-            // Vendor unreachable or disabled: save as unverified.
+            if ($info === null) {
+                throw ValidationException::withMessages(['meter_number' => 'This meter number was not recognised. Check the number on the front of the meter.']);
+            }
+
+            $meter ??= new Meter(['estate_id' => $estate->id, 'meter_number' => $meterNumber, 'created_by' => $user->id]);
+            $meter->fill([
+                'meter_type' => $info->meterType ?? $meter->meter_type,
+                'vendor_customer_name' => $info->customerName ?? $meter->vendor_customer_name,
+                'vendor_address' => $info->address ?? $meter->vendor_address,
+                'validated_at' => now(),
+            ]);
+            $isNew = ! $meter->exists;
+            $meter->save();
+
+            $this->audit->record($isNew ? 'meter.registered' : 'meter.verified', $meter, ['verified' => true], $estate, $user);
         }
 
-        $meter = Meter::create([
-            'estate_id' => $estate->id,
-            'property_id' => $property->id,
-            'meter_number' => $meterNumber,
-            'label' => $label ?: $property->identifier,
-            'meter_type' => $info?->meterType,
-            'vendor_customer_name' => $info?->customerName,
-            'validated_at' => $verified ? now() : null,
-            'created_by' => $user->id,
-        ]);
-
-        $this->audit->record('meter.registered', $meter, ['verified' => $verified], $estate, $user);
+        $user->favouriteMeters()->syncWithoutDetaching([$meter->id]);
 
         return $meter;
+    }
+
+    /**
+     * Meters the user has checked before, bought for, or that are on their home.
+     *
+     * @return Collection<int, Meter>
+     */
+    public function savedFor(User $user, Estate $estate): Collection
+    {
+        $ids = $user->favouriteMeters()->where('meters.estate_id', $estate->id)->pluck('meters.id')
+            ->merge(PowerPurchase::forEstate($estate)->where('user_id', $user->id)->latest()->limit(50)->pluck('meter_id'))
+            ->merge(Meter::forEstate($estate)->whereIn('property_id', $user->authorizedProperties($estate)->pluck('properties.id'))->pluck('id'))
+            ->unique();
+
+        return Meter::forEstate($estate)->whereIn('id', $ids)->where('status', 'active')->with('property')->orderBy('meter_number')->get();
     }
 }

@@ -35,7 +35,7 @@
                         @forelse ($purchases as $purchase)
                             <tr class="cursor-pointer hover:bg-canvas" onclick="location.href='{{ route('manage.power.show', $purchase) }}'">
                                 <td class="px-5 py-3 font-mono text-xs font-semibold"><a href="{{ route('manage.power.show', $purchase) }}">{{ $purchase->reference }}</a></td>
-                                <td class="px-3 py-3">{{ $purchase->user->name }}<p class="text-xs text-muted">{{ $purchase->property->identifier }}</p></td>
+                                <td class="px-3 py-3">{{ $purchase->user->name }}<p class="text-xs text-muted">{{ $purchase->property?->identifier ?? $purchase->meter_number }}</p></td>
                                 <td class="px-3 py-3 font-mono text-xs">{{ $purchase->meter_number }}</td>
                                 <td class="px-3 py-3 text-right font-semibold tnum">{{ money($purchase->vend_amount) }}</td>
                                 <td class="px-3 py-3">{{ ucfirst($purchase->gateway) }}</td>

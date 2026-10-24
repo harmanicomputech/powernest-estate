@@ -24,14 +24,14 @@
                         <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-gold-50 text-gold-600"><x-icon name="plug-zap" class="size-5" /></span>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2">
-                                <p class="truncate font-semibold">{{ $meter->label }}</p>
+                                <p class="truncate font-semibold">{{ $meter->vendor_customer_name ?? $meter->label ?? 'Meter' }}</p>
                                 @if ($meter->validated_at)
                                     <x-icon name="badge-check" class="size-4 text-brand-600" aria-label="Verified" />
                                 @else
                                     <x-ui.badge tone="warning">Unverified</x-ui.badge>
                                 @endif
                             </div>
-                            <p class="font-mono text-sm text-muted tnum">{{ $meter->meter_number }} · {{ $meter->property->identifier }}</p>
+                            <p class="truncate text-sm text-muted"><span class="font-mono tnum">{{ $meter->meter_number }}</span>{{ ($meter->vendor_address ?? $meter->property?->identifier) ? ' · '.($meter->vendor_address ?? $meter->property?->identifier) : '' }}</p>
                         </div>
                         <form method="POST" action="{{ route('power.meters.favourite', $meter) }}">@csrf
                             <button class="grid size-9 place-items-center rounded-lg hover:bg-sunken" aria-label="{{ $favourites->contains($meter->id) ? 'Remove from favourites' : 'Add to favourites' }}">
@@ -41,7 +41,7 @@
                         <x-ui.button :href="route('power.buy', ['meter' => $meter->id])" size="sm">Buy</x-ui.button>
                     </div>
                 @empty
-                    <x-ui.empty icon="plug-zap" title="No meters yet" description="Add the prepaid meter number on your property to start buying electricity." class="border-t border-line">
+                    <x-ui.empty icon="plug-zap" title="No meters yet" description="Enter a prepaid meter number to start buying electricity." class="border-t border-line">
                         <x-ui.button type="button" icon="plus" x-data x-on:click="$dispatch('open-modal', 'add-meter')">Add meter</x-ui.button>
                     </x-ui.empty>
                 @endforelse
@@ -70,7 +70,7 @@
     <x-ui.modal name="add-meter" title="Add a meter">
         @include('power.partials.add-meter')
     </x-ui.modal>
-    @if ($errors->has('meter_number') || $errors->has('property_id'))
+    @if ($errors->has('meter_number'))
         <div x-data x-init="$nextTick(() => $dispatch('open-modal', 'add-meter'))"></div>
     @endif
 </x-layouts.app>

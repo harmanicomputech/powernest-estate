@@ -9,7 +9,7 @@
                     <x-ui.button variant="secondary" icon="search">Find</x-ui.button>
                 </form>
                 @if ($number !== '' && ! $meter)
-                    <x-ui.alert tone="warning" class="mt-4">No meter {{ $number }} is registered in this estate. Add it to the property first (Properties → choose the home → Meters).</x-ui.alert>
+                    <x-ui.alert tone="warning" class="mt-4">{{ $lookupError ?? 'Meter '.$number.' could not be found.' }}</x-ui.alert>
                 @endif
             </x-ui.card>
 
@@ -19,7 +19,7 @@
                         <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-gold-50 text-gold-600"><x-icon name="zap" class="size-5" /></span>
                         <div class="min-w-0 text-sm">
                             <p class="font-mono font-bold">{{ $meter->meter_number }}</p>
-                            <p class="text-muted">{{ $meter->property->identifier }}{{ $meter->vendor_customer_name ? ' · '.$meter->vendor_customer_name : '' }}</p>
+                            <p class="text-muted">{{ $meter->property?->identifier ?? $meter->vendor_address ?? 'Not linked to a home' }}{{ $meter->vendor_customer_name ? ' · '.$meter->vendor_customer_name : '' }}</p>
                             <p class="text-muted">Token goes to: <span class="font-semibold text-ink">{{ $owner ? $owner->name.' ('.$owner->email.')' : 'you (no one lives here yet)' }}</span></p>
                         </div>
                     </div>

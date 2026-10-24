@@ -21,7 +21,7 @@
             <x-ui.dl :items="[
                 'Value' => money($purchase->vend_amount).' (no payment)',
                 'Meter' => $purchase->meter_number,
-                'Property' => $purchase->property->identifier,
+                'Property' => $purchase->property?->identifier ?? '—',
                 'Sent to' => $purchase->user->name.' · '.$purchase->user->email,
                 'Issued by' => $purchase->issuer?->name,
                 'Reason' => $purchase->office_note,

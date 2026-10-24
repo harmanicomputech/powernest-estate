@@ -10,7 +10,7 @@
         <div class="space-y-6 lg:col-span-2">
             <x-ui.card title="Purchase">
                 <div class="grid gap-x-8 sm:grid-cols-2">
-                    <x-ui.dl :items="['Customer' => $purchase->user->name.' ('.$purchase->user->email.')', 'Property' => $purchase->property->identifier, 'Meter' => $purchase->meter_number, 'Vend amount' => money($purchase->vend_amount), 'Service charge' => money($purchase->service_charge), 'Expected total' => money($purchase->total_amount)]" />
+                    <x-ui.dl :items="['Customer' => $purchase->user->name.' ('.$purchase->user->email.')', 'Property' => $purchase->property?->identifier ?? '—', 'Meter' => $purchase->meter_number, 'Vend amount' => money($purchase->vend_amount), 'Service charge' => money($purchase->service_charge), 'Expected total' => money($purchase->total_amount)]" />
                     <x-ui.dl :items="['Gateway' => ucfirst($purchase->gateway), 'Amount received' => $purchase->amount_paid !== null ? money($purchase->amount_paid) : 'Not confirmed', 'Gateway reference' => $purchase->gateway_reference, 'Channel' => humanize($purchase->payment_channel), 'Confirmed via' => humanize($purchase->payment_confirmed_via), 'Last verified' => $purchase->last_verified_at ? local_time($purchase->last_verified_at) : 'Never']" class="mt-3 sm:mt-0" />
                 </div>
             </x-ui.card>

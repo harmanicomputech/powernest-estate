@@ -10,7 +10,7 @@
     <table class="items" style="margin-top:18px">
         <tbody>
             <tr><td class="muted" style="width:35%">Customer</td><td>{{ $purchase->user->name }}</td></tr>
-            <tr><td class="muted">Property</td><td>{{ $purchase->property->identifier }}</td></tr>
+            <tr><td class="muted">Property</td><td>{{ $purchase->property?->identifier ?? $purchase->meter?->vendor_address ?? '—' }}</td></tr>
             <tr><td class="muted">Meter number</td><td>{{ $purchase->meter_number }}</td></tr>
             <tr><td class="muted">Electricity value</td><td>{{ money($purchase->vend_amount) }}</td></tr>
             @if ($purchase->isOfficeVend())
