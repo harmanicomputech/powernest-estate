@@ -267,13 +267,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $ready) {
             app(AuditLogger::class)->record('platform.installed', $estate, ['admin' => $user->email], $estate, $user);
             $log[] = "Administrator {$user->email} and estate “{$estate->name}” created.";
 
+            // Optional data bundled from the old PowerNest power app (customers, homes, meters, history).
+            $legacyFile = $app.'/storage/app/legacy-import.sql';
+            if (is_file($legacyFile)) {
+                if (! empty($in['import_legacy'])) {
+                    $db = Illuminate\Support\Facades\DB::connection();
+                    foreach (preg_split('/;\R/', (string) file_get_contents($legacyFile)) as $statement) {
+                        $statement = trim((string) preg_replace('/^--.*$/m', '', $statement));
+                        if ($statement !== '') {
+                            $db->unprepared($statement);
+                        }
+                    }
+                    for ($i = 0; $i < 20 && $db->table('legacy_token_imports')->exists(); $i++) {
+                        $kernel->call('power:import-legacy-tokens');
+                    }
+                    $log[] = sprintf('Imported %d customers, %d homes, %d meters and %d electricity purchases from the old app.',
+                        $db->table('users')->count() - 1, $db->table('properties')->count(), $db->table('meters')->count(), $db->table('power_purchases')->count());
+                    $done['imported'] = true;
+                }
+                @unlink($legacyFile);
+            }
+
             if ($secure && is_writable($htaccess = dirname(__DIR__).'/.htaccess')) {
                 file_put_contents($htaccess, str_replace('#PNE-HTTPS ', '', (string) file_get_contents($htaccess)));
             }
 
             file_put_contents($app.'/storage/installed.lock', date(DATE_ATOM));
 
-            $done = ['url' => $url, 'cron' => $url.'/cron/'.$cronToken, 'email' => $user->email, 'paystack' => $url.'/webhooks/paystack'];
+            $done = ['url' => $url, 'cron' => $url.'/cron/'.$cronToken, 'email' => $user->email, 'paystack' => $url.'/webhooks/paystack'] + ($done ?? []);
 
             // Remove the installer so it can never be run again.
             foreach (glob(__DIR__.'/*') ?: [] as $file) {
@@ -333,7 +354,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $ready) {
 <main><div class="wrap">
 
 <?php if ($done) { ?>
-    <div class="alert alert-ok"><strong>Installation complete.</strong> The installer has removed itself.</div>
+    <div class="alert alert-ok"><strong>Installation complete.</strong> The installer has removed itself.<?php foreach ($log as $line): ?><br><?= e($line) ?><?php endforeach ?></div>
+    <?php if (! empty($done['imported'])): ?>
+        <div class="alert alert-ok">Customers from the old PowerNest app can sign in with their existing email and password. Check the homes each customer was linked to under <strong>Properties</strong>.</div>
+    <?php endif ?>
     <div class="card">
         <h2>1. Sign in</h2>
         <p class="muted">Use <strong><?= e($done['email']) ?></strong> and the password you chose. You are the platform administrator and the owner of the first estate.</p>
@@ -443,6 +467,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $ready) {
                 </div>
             </details>
         </div>
+
+        <?php if ($app && is_file($app.'/storage/app/legacy-import.sql')): ?>
+        <div class="card">
+            <h2>Data from the old PowerNest app</h2>
+            <p class="muted">This package includes your customers, their homes and meters, and electricity purchase history with tokens. It is imported into the estate above, then the data file is deleted from the server.</p>
+            <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" name="import_legacy" value="1" style="width:auto" <?= $_SERVER['REQUEST_METHOD'] !== 'POST' || ! empty($_POST['import_legacy']) ? 'checked' : '' ?>> Import this data</label>
+        </div>
+        <?php endif ?>
 
         <button type="submit">Install PowerNest Estate</button>
     </form>

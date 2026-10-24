@@ -40,6 +40,13 @@ rm -f "$PKG/powernest/bootstrap/cache/"*.php
 mkdir -p "$PKG/powernest/storage/"{app/private,app/public,fonts,logs,framework/cache/data,framework/sessions,framework/views}
 cp resources/shared-hosting/README-INSTALL.txt "$PKG/README-INSTALL.txt"
 
+# Optional: bundle legacy PowerNest data for the installer to import (LEGACY_SQL=/path/to/import.sql).
+# The file holds personal data; it sits outside the web root and the installer deletes it after use.
+if [ -n "${LEGACY_SQL:-}" ]; then
+    cp "$LEGACY_SQL" "$PKG/powernest/storage/app/legacy-import.sql"
+    echo "Bundled legacy data from $LEGACY_SQL"
+fi
+
 find "$PKG" -type d -exec chmod 755 {} +
 find "$PKG" -type f -exec chmod 644 {} +
 
