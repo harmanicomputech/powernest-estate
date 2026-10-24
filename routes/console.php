@@ -57,8 +57,9 @@ Artisan::command('powernest:create-admin', function () {
 
 Artisan::command('power:import-legacy-tokens', function () {
     $moved = 0;
-    DB::table('legacy_token_imports')->orderBy('id')->limit(1000)->get()->each(function (object $row) use (&$moved) {
-        DB::transaction(function () use ($row, &$moved) {
+    // One transaction per batch: much faster on shared hosting than committing every row.
+    DB::transaction(function () use (&$moved) {
+        foreach (DB::table('legacy_token_imports')->orderBy('id')->limit(1000)->get() as $row) {
             $purchase = PowerPurchase::where('reference', $row->purchase_reference)->first();
 
             if ($purchase && ! $purchase->token()->exists()) {
@@ -75,7 +76,7 @@ Artisan::command('power:import-legacy-tokens', function () {
             }
 
             DB::table('legacy_token_imports')->where('id', $row->id)->delete();
-        });
+        }
     });
     $this->info("Imported {$moved} legacy tokens");
 })->purpose('Encrypt electricity tokens imported from the legacy PowerNest app into power_tokens');
