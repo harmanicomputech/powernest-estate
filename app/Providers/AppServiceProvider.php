@@ -30,6 +30,9 @@ class AppServiceProvider extends ServiceProvider
     {
         Model::shouldBeStrict(! $this->app->isProduction());
 
+        // dompdf defaults to base_path('public'); on shared hosting the web root is public_html outside the app.
+        config(['dompdf.public_path' => $this->app->publicPath()]);
+
         // Livewire update requests re-run the estate resolver so components see the same verified context.
         Livewire::addPersistentMiddleware([ResolveEstateContext::class]);
 

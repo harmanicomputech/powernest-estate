@@ -27,7 +27,14 @@ class ReceiptPdfTest extends TestCase
         ]);
         PowerToken::create(['power_purchase_id' => $purchase->id, 'token' => '70170803671348648463', 'units' => '22.70', 'meter_number' => $meter->meter_number, 'issued_at' => now()]);
 
+        // Shared-hosting layout: the web root (public_html) lives outside the application folder.
+        $webRoot = sys_get_temp_dir().'/pne-public-html-'.uniqid();
+        mkdir($webRoot);
+        $this->app->usePublicPath($webRoot);
+        config(['dompdf.public_path' => $webRoot]);
+
         $response = $this->inEstate($resident, $estate)->get(route('pdf.purchase', $purchase));
+        rmdir($webRoot);
 
         $response->assertOk()->assertHeader('content-type', 'application/pdf');
         $this->assertStringStartsWith('%PDF', $response->getContent());
