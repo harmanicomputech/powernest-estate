@@ -17,7 +17,7 @@ class PowerTokenIssued extends AppNotification
 
     protected function title(): string
     {
-        return 'Your electricity token is ready';
+        return $this->purchase->isOfficeVend() ? 'The estate office sent you an electricity token' : 'Your electricity token is ready';
     }
 
     protected function body(): string
@@ -49,10 +49,10 @@ class PowerTokenIssued extends AppNotification
         return (new MailMessage)
             ->subject('Electricity token · '.$this->purchase->meter_number)
             ->greeting('Hello '.$notifiable->firstName().',')
-            ->line('Your electricity purchase was successful.')
+            ->line($this->purchase->isOfficeVend() ? 'The estate office has issued an electricity token for your meter.' : 'Your electricity purchase was successful.')
             ->line('**Token:** '.trim(chunk_split((string) $token?->token, 4, ' ')))
             ->line('Meter: '.$this->purchase->meter_number.($token?->units ? ' · Units: '.$token->units.' '.$token->unit_label : ''))
-            ->line('Amount: '.Money::format($this->purchase->vend_amount).' (total paid '.Money::format($this->purchase->amount_paid).')')
+            ->line('Amount: '.Money::format($this->purchase->vend_amount).($this->purchase->isOfficeVend() ? ' (no payment required)' : ' (total paid '.Money::format($this->purchase->amount_paid).')'))
             ->line('Reference: '.$this->purchase->reference)
             ->action('View receipt', $this->url());
     }

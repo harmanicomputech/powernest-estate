@@ -43,6 +43,16 @@
                 <x-ui.checkbox name="directory_visible" label="Residents can see a resident directory" description="Off by default for privacy." :checked="(bool) $estate->setting('residents.directory_visible')" />
             </div>
         </x-ui.card>
+        <x-ui.card title="Yearly estate levy" description="Estate management & security fee billed once a year.">
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <x-ui.input name="levy_amount" label="Amount per home" prefix="₦" :value="\App\Support\Money::toDecimalString($estate->setting('levy.amount'))" />
+                    <x-ui.input name="levy_grace_days" type="number" label="Days after due date" :value="$estate->setting('levy.grace_days')" hint="Before access is paused" />
+                </div>
+                <x-ui.checkbox name="levy_lockout_enabled" label="Pause app access for residents who haven't paid" description="They can still pay online or upload a bank receipt; access returns once paid or the receipt is approved. Staff are never locked." :checked="(bool) $estate->setting('levy.lockout_enabled')" />
+                <p class="text-sm text-muted">Bill everyone for the year from <a href="{{ route('manage.billing.index') }}" class="link">Billing</a> → “Estate management & security levy” → Run.</p>
+            </div>
+        </x-ui.card>
         <div class="flex items-end lg:col-span-2"><x-ui.button size="lg" icon="check">Save settings</x-ui.button></div>
     </form>
 

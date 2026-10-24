@@ -135,7 +135,10 @@ class User extends Authenticatable implements MustVerifyEmail
             return false;
         }
 
-        return $this->rolesIn($estate)->contains(fn (EstateRole $role) => in_array($permission, $role->permissions(), true));
+        $estateModel = $estate instanceof Estate ? $estate : Estate::find($estate);
+
+        return $estateModel !== null
+            && $this->rolesIn($estateModel)->contains(fn (EstateRole $role) => in_array($permission, $estateModel->permissionsFor($role), true));
     }
 
     public function isMemberOf(Estate|int $estate): bool

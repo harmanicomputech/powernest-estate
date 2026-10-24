@@ -409,6 +409,29 @@ a.is-loading:not([data-ripple]) {
     animation: pop 0.35s var(--ease-out-soft) both;
 }
 
+/* Printing a token or receipt: only the content, on white. */
+@media print {
+    .app-sidebar,
+    .app-topbar,
+    .app-bottombar,
+    #nav-progress,
+    [data-print-hide] {
+        display: none !important;
+    }
+
+    body {
+        background: #fff !important;
+    }
+
+    main {
+        padding: 0 !important;
+    }
+
+    .lg\:pl-\[17rem\] {
+        padding-left: 0 !important;
+    }
+}
+
 @utility pb-safe {
     padding-bottom: max(env(safe-area-inset-bottom), 0px);
 }

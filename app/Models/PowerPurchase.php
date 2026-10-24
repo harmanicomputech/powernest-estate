@@ -39,6 +39,19 @@ class PowerPurchase extends Model
         return 'reference';
     }
 
+    public function issuer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'issued_by');
+    }
+
+    /**
+     * Issued by estate staff without payment (no gateway involved).
+     */
+    public function isOfficeVend(): bool
+    {
+        return $this->gateway === 'office';
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

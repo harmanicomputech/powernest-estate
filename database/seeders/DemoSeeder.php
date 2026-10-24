@@ -229,8 +229,10 @@ class DemoSeeder extends Seeder
                 ]);
 
                 // Admit roughly half of today's visitors so the gate has history.
-                if ($n % 2 === 1 || $i % 4 === 0) {
-                    $this->travel($start->copy()->subHours(mt_rand(0, 3))->utc(), fn () => $gate->admit($pass, $guard, $mainGate));
+                // Only admit at times already in the past, so seeding works at any time of day.
+                $admitAt = $start->copy()->subHours(mt_rand(0, 3));
+                if (($n % 2 === 1 || $i % 4 === 0) && $admitAt->isPast()) {
+                    $this->travel($admitAt->utc(), fn () => $gate->admit($pass, $guard, $mainGate));
                 }
             }
         }
@@ -337,7 +339,7 @@ class DemoSeeder extends Seeder
         }
 
         // Yearly estate management & security levy: some paid online/offline, some receipts awaiting review.
-        $levy = ChargeType::create(['estate_id' => $this->estate->id, 'name' => 'Estate management & security levy', 'code' => 'LEVY', 'amount' => 25_000_000, 'frequency' => 'annual']);
+        $levy = ChargeType::create(['estate_id' => $this->estate->id, 'name' => 'Estate management & security levy', 'code' => 'LEVY', 'amount' => 100_000_000, 'frequency' => 'annual']);
         $yearStart = now($tz)->startOfYear();
         $this->travel($yearStart->copy()->addDays(2)->setTime(9, 0)->utc(), fn () => $billing->runCharge($levy, $yearStart, $yearStart->copy()->endOfYear(), $yearStart->copy()->addMonth(), $finance));
         $submissions = app(PaymentSubmissionService::class);

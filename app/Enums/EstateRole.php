@@ -51,6 +51,9 @@ enum EstateRole: string
     }
 
     /**
+     * Built-in permissions for this role. An estate can change them (except for the owner) under
+     * Roles & permissions; see Estate::permissionsFor().
+     *
      * @return list<P>
      */
     public function permissions(): array
@@ -59,7 +62,7 @@ enum EstateRole: string
 
         return match ($this) {
             self::EstateOwner, self::EstateManager => P::cases(),
-            self::EstateAdmin => array_values(array_filter(P::cases(), fn (P $p) => ! in_array($p, [P::EstateSettings, P::BillingApprove, P::ExpensesApprove], true))),
+            self::EstateAdmin => array_values(array_filter(P::cases(), fn (P $p) => ! in_array($p, [P::EstateSettings, P::BillingApprove, P::ExpensesApprove, P::RolesManage], true))),
             self::FinanceOfficer => [P::PropertiesView, P::ResidentsView, P::PowerViewAll, P::PowerReconcile, P::BillingManage, P::BillingApprove, P::ExpensesManage, P::ExpensesApprove, P::SupportManage, P::ReportsView, P::TasksWork],
             self::SecuritySupervisor => [P::PropertiesView, P::ResidentsView, P::VisitorsViewAll, P::GateOperate, P::GateSupervise, P::IncidentsReport, P::IncidentsManage, P::InspectionsPerform, P::StaffManage, P::TasksWork, P::ReportsView],
             self::SecurityOfficer => [P::PropertiesView, P::GateOperate, P::IncidentsReport, P::InspectionsPerform, P::TasksWork],

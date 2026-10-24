@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Manage;
 
 use App\Http\Controllers\Controller;
 use App\Integrations\Payments\GatewayManager;
+use App\Models\ChargeType;
 use App\Models\EmergencyContact;
 use App\Models\Gate;
 use App\Services\Audit\AuditLogger;
@@ -50,6 +51,9 @@ class SettingsController extends Controller
             'max_pass_days' => ['required', 'integer', 'min:1', 'max:365'],
             'require_walk_in_approval' => ['nullable', 'boolean'],
             'directory_visible' => ['nullable', 'boolean'],
+            'levy_amount' => ['required', 'string', 'max:15'],
+            'levy_lockout_enabled' => ['nullable', 'boolean'],
+            'levy_grace_days' => ['required', 'integer', 'min:0', 'max:365'],
         ]);
 
         $min = Money::parse($data['min_amount']);
@@ -67,7 +71,16 @@ class SettingsController extends Controller
         $estate->putSetting('visitors.max_pass_days', (int) $data['max_pass_days']);
         $estate->putSetting('visitors.require_walk_in_approval', $request->boolean('require_walk_in_approval'));
         $estate->putSetting('residents.directory_visible', $request->boolean('directory_visible'));
+        $estate->putSetting('levy.amount', Money::parse($data['levy_amount']));
+        $estate->putSetting('levy.lockout_enabled', $request->boolean('levy_lockout_enabled'));
+        $estate->putSetting('levy.grace_days', (int) $data['levy_grace_days']);
         $estate->save();
+
+        // Keep the yearly levy charge in Billing in step with the amount set here.
+        ChargeType::updateOrCreate(
+            ['estate_id' => $estate->id, 'code' => 'LEVY'],
+            ['name' => 'Estate management & security levy', 'amount' => (int) $estate->setting('levy.amount'), 'frequency' => 'annual', 'is_active' => true],
+        );
 
         $this->audit->record('estate.settings_updated', $estate, ['changed' => array_keys($estate->getChanges())], $estate);
 

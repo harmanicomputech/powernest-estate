@@ -13,16 +13,65 @@ use App\Models\MaintenanceRequest;
 use App\Models\Payment;
 use App\Models\PowerPurchase;
 use App\Models\Visit;
+use App\Services\Audit\AuditLogger;
+use App\Services\Reports\ReportBuilder;
 use App\Support\EstateContext;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Monthly operational and financial summary built from live records.
+ * Monthly operational and financial summary built from live records, plus CSV / PDF downloads.
  */
 class ReportController extends Controller
 {
+    public function download(Request $request, EstateContext $context, ReportBuilder $builder, AuditLogger $audit): Response
+    {
+        $estate = $context->estate();
+        $tz = $estate->timezone();
+        $data = $request->validate([
+            'type' => ['required', Rule::in(array_keys(ReportBuilder::TYPES))],
+            'from' => ['required', 'date'],
+            'to' => ['required', 'date', 'after_or_equal:from'],
+            'format' => ['required', Rule::in(['csv', 'pdf'])],
+        ]);
+        $from = Carbon::parse($data['from'], $tz);
+        $to = Carbon::parse($data['to'], $tz);
+
+        $report = $builder->build($data['type'], $estate, $from, $to);
+        $filename = Str::slug($estate->name.' '.$report['title'].' '.$from->format('Y-m-d').' to '.$to->format('Y-m-d')).'.'.$data['format'];
+        $audit->record('report.downloaded', $estate, ['type' => $data['type'], 'format' => $data['format'], 'from' => $from->toDateString(), 'to' => $to->toDateString(), 'rows' => count($report['rows'])], $estate, $request->user());
+
+        if ($data['format'] === 'csv') {
+            return response()->streamDownload(function () use ($report, $estate, $from, $to) {
+                $out = fopen('php://output', 'w');
+                fwrite($out, "\xEF\xBB\xBF"); // UTF-8 BOM so Excel shows ₦ and names correctly
+                fputcsv($out, [$estate->name.' · '.$report['title'].' · '.$from->format('j M Y').' – '.$to->format('j M Y')]);
+                foreach ($report['summary'] as $label => $value) {
+                    fputcsv($out, [$label, $value]);
+                }
+                fputcsv($out, []);
+                fputcsv($out, $report['columns']);
+                foreach ($report['rows'] as $row) {
+                    fputcsv($out, $row);
+                }
+                fclose($out);
+            }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8', 'Cache-Control' => 'no-store, private']);
+        }
+
+        @ini_set('memory_limit', '512M');
+        @set_time_limit(120);
+
+        return Pdf::loadView('pdf.report', ['estate' => $estate, 'report' => $report, 'from' => $from, 'to' => $to, 'rowLimit' => 3000])
+            ->setOption(['font_dir' => storage_path('fonts'), 'font_cache' => storage_path('fonts')])
+            ->setPaper('a4', count($report['columns']) > 7 ? 'landscape' : 'portrait')
+            ->download($filename);
+    }
+
     public function index(Request $request, EstateContext $context): View
     {
         $estate = $context->estate();

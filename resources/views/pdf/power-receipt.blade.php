@@ -13,10 +13,15 @@
             <tr><td class="muted">Property</td><td>{{ $purchase->property->identifier }}</td></tr>
             <tr><td class="muted">Meter number</td><td>{{ $purchase->meter_number }}</td></tr>
             <tr><td class="muted">Electricity value</td><td>{{ money($purchase->vend_amount) }}</td></tr>
-            <tr><td class="muted">Service charge</td><td>{{ money($purchase->service_charge) }}</td></tr>
-            <tr><td class="muted">Total paid</td><td><strong>{{ money($purchase->amount_paid ?? $purchase->total_amount) }}</strong></td></tr>
-            <tr><td class="muted">Paid via</td><td>{{ ucfirst($purchase->gateway) }}{{ $purchase->payment_channel ? ' · '.humanize($purchase->payment_channel) : '' }}</td></tr>
-            <tr><td class="muted">Paid at</td><td>{{ $purchase->paid_at?->timezone($tz)->format('j M Y, g:ia') }}</td></tr>
+            @if ($purchase->isOfficeVend())
+                <tr><td class="muted">Payment</td><td><strong>None required — issued by the estate office</strong></td></tr>
+                <tr><td class="muted">Issued by</td><td>{{ $purchase->issuer?->name }}{{ $purchase->office_note ? ' · '.$purchase->office_note : '' }}</td></tr>
+            @else
+                <tr><td class="muted">Service charge</td><td>{{ money($purchase->service_charge) }}</td></tr>
+                <tr><td class="muted">Total paid</td><td><strong>{{ money($purchase->amount_paid ?? $purchase->total_amount) }}</strong></td></tr>
+                <tr><td class="muted">Paid via</td><td>{{ ucfirst($purchase->gateway) }}{{ $purchase->payment_channel ? ' · '.humanize($purchase->payment_channel) : '' }}</td></tr>
+                <tr><td class="muted">Paid at</td><td>{{ $purchase->paid_at?->timezone($tz)->format('j M Y, g:ia') }}</td></tr>
+            @endif
             @if ($token)<tr><td class="muted">Token issued</td><td>{{ $token->issued_at->timezone($tz)->format('j M Y, g:ia') }}</td></tr>@endif
         </tbody>
     </table>

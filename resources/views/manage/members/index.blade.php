@@ -1,6 +1,7 @@
 <x-layouts.app title="Members & access">
-    <x-ui.page-header title="Members & access" description="Estate staff accounts, pending invitations and resident access requests.">
-        <x-ui.button type="button" icon="user-plus" x-data x-on:click="$dispatch('open-modal', 'invite-staff')">Invite staff</x-ui.button>
+    <x-ui.page-header title="Members & access" description="Estate staff accounts, roles, pending invitations and resident access requests.">
+        @can('roles.manage')<x-ui.button :href="route('manage.roles.index')" variant="secondary" icon="shield-check">Roles & permissions</x-ui.button>@endcan
+        <x-ui.button type="button" icon="user-plus" x-data x-on:click="$dispatch('open-modal', 'invite-staff')">Add staff / give role</x-ui.button>
     </x-ui.page-header>
     <x-ui.tabs :active="$tab" :tabs="['staff' => ['Staff', route('manage.members.index'), $staff->count()], 'invitations' => ['Invitations', route('manage.members.index', ['tab' => 'invitations']), $invitations->count()], 'requests' => ['Access requests', route('manage.members.index', ['tab' => 'requests']), $requests->count()]]" />
 
@@ -11,14 +12,27 @@
                     <x-ui.avatar :user="$membership->user" />
                     <div class="min-w-0 flex-1"><p class="truncate font-semibold">{{ $membership->user->name }}</p><p class="truncate text-sm text-muted">{{ $membership->role->label() }}{{ $membership->title ? ' · '.$membership->title : '' }} · {{ $membership->user->email }}</p></div>
                     <x-ui.status :value="$membership->status" />
-                    @if ($membership->user_id !== auth()->id())
-                        <form method="POST" action="{{ route('manage.members.status', $membership) }}">@csrf
-                            @if ($membership->status === \App\Enums\MembershipStatus::Active)
-                                <x-ui.button name="status" value="suspended" size="sm" variant="ghost">Suspend</x-ui.button>
-                            @else
-                                <x-ui.button name="status" value="active" size="sm" variant="secondary">Reinstate</x-ui.button>
-                            @endif
-                        </form>
+                    @if ($membership->user_id !== auth()->id() && ($membership->role !== \App\Enums\EstateRole::EstateOwner || array_key_exists('estate_owner', $staffRoles)))
+                        <div class="flex w-full flex-wrap items-center gap-1.5 sm:w-auto">
+                            <form method="POST" action="{{ route('manage.members.role', $membership) }}" class="flex-1 sm:flex-none">@csrf @method('PUT')
+                                <select name="role" class="control h-9 py-0 text-sm" aria-label="Role for {{ $membership->user->name }}" onchange="this.form.requestSubmit()">
+                                    @foreach ($staffRoles as $value => $label)
+                                        <option value="{{ $value }}" @selected($membership->role->value === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </form>
+                            <form method="POST" action="{{ route('manage.members.status', $membership) }}">@csrf
+                                @if ($membership->status === \App\Enums\MembershipStatus::Active)
+                                    <x-ui.button name="status" value="suspended" size="sm" variant="ghost">Suspend</x-ui.button>
+                                @else
+                                    <x-ui.button name="status" value="active" size="sm" variant="secondary">Reinstate</x-ui.button>
+                                @endif
+                            </form>
+                            <x-ui.confirm :action="route('manage.members.status', $membership)" title="Remove this role?" :message="$membership->user->name.' will lose '.$membership->role->label().' access. Their other roles (e.g. resident) are not affected.'" confirm="Remove role" confirm-variant="danger" variant="ghost" size="sm">
+                                <x-slot:fields><input type="hidden" name="status" value="revoked"></x-slot:fields>
+                                Remove
+                            </x-ui.confirm>
+                        </div>
                     @endif
                 </div>
             @empty
@@ -54,12 +68,13 @@
         @endif
     </x-ui.card>
 
-    <x-ui.modal name="invite-staff" title="Invite staff member">
+    <x-ui.modal name="invite-staff" title="Add staff or give someone a role">
+        <p class="mb-4 text-sm text-muted">If the email belongs to someone already in this estate (for example a resident), they get the role straight away. Otherwise we email them an invitation.</p>
         <form method="POST" action="{{ route('manage.members.invite') }}" class="space-y-4">@csrf
             <x-ui.input name="name" label="Name" optional />
             <x-ui.input name="email" type="email" label="Email" required />
             <x-ui.select name="role" label="Role" :options="$staffRoles" />
-            <x-ui.button class="w-full" icon="send">Send invitation</x-ui.button>
+            <x-ui.button class="w-full" icon="send">Give role / send invitation</x-ui.button>
         </form>
     </x-ui.modal>
 </x-layouts.app>

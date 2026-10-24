@@ -394,6 +394,53 @@ class PowerPurchaseService
         return $issued;
     }
 
+    /**
+     * Estate staff issue a token without payment (e.g. compensation, prepaid at the office). The token is
+     * vended immediately through the normal vending path and emailed to the meter's main occupant.
+     */
+    public function issueWithoutPayment(Estate $estate, User $actor, Meter $meter, int $vendAmount, string $note): PowerPurchase
+    {
+        abort_unless($actor->hasEstatePermission($estate, Permission::PowerVendManual), 403);
+        abort_unless($meter->estate_id === $estate->id, 404);
+
+        $max = (int) $estate->setting('power.max_amount');
+        if ($vendAmount < 10_000 || $vendAmount > $max) {
+            throw ValidationException::withMessages(['amount' => 'Enter an amount between ₦100 and '.Money::format($max, showKobo: false).'.']);
+        }
+
+        $owner = $meter->property?->occupancies()->where('status', 'active')->orderByDesc('is_primary')->with('user')->first()?->user;
+
+        $purchase = DB::transaction(function () use ($estate, $actor, $meter, $vendAmount, $note, $owner) {
+            $purchase = PowerPurchase::create([
+                'reference' => $this->uniqueReference(),
+                'estate_id' => $estate->id,
+                'user_id' => ($owner ?? $actor)->id,
+                'issued_by' => $actor->id,
+                'meter_id' => $meter->id,
+                'property_id' => $meter->property_id,
+                'meter_number' => $meter->meter_number,
+                'gateway' => 'office',
+                'currency' => $estate->currency ?? 'NGN',
+                'vend_amount' => $vendAmount,
+                'service_charge' => 0,
+                'total_amount' => $vendAmount,
+                'amount_paid' => 0,
+                'payment_confirmed_via' => 'staff',
+                'paid_at' => now(),
+                'office_note' => mb_substr($note, 0, 250),
+                'status' => Status::PendingPayment,
+            ]);
+
+            $this->logEvent($purchase, null, Status::PendingPayment, $actor, 'Issued by estate office: '.$note);
+            $this->transition($purchase, Status::Paid, $actor, 'No payment required (estate office)');
+            $this->audit->record('power.office_vend', $purchase, ['amount' => $vendAmount, 'note' => $note, 'owner' => $owner?->id], $estate, $actor);
+
+            return $purchase;
+        });
+
+        return $this->vend($purchase, $actor);
+    }
+
     public function confirmPaymentManually(PowerPurchase $purchase, User $actor, int $amountReceived, string $evidence): PowerPurchase
     {
         $this->authorizeReconcile($purchase, $actor);

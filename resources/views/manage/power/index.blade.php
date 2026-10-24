@@ -1,6 +1,9 @@
 @php use App\Enums\PowerPurchaseStatus as S; @endphp
 <x-layouts.app title="Power operations" wide>
-    <x-ui.page-header title="Power operations" description="Electricity sales, in-flight purchases and anything needing reconciliation." />
+    <x-ui.page-header title="Power operations" description="Electricity sales, in-flight purchases and anything needing reconciliation.">
+        @can('reports.view')<x-ui.button :href="route('manage.reports.index', ['type' => 'power']).'#downloads'" variant="secondary" icon="download">Download report</x-ui.button>@endcan
+        @can('power.vend_manual')<x-ui.button :href="route('manage.office-vend.create')" icon="zap">Issue token</x-ui.button>@endcan
+    </x-ui.page-header>
 
     <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <x-ui.stat label="Sales today" :value="money($todayVolume, false)" icon="zap" tone="gold" />

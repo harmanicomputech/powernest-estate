@@ -1,5 +1,6 @@
 <x-layouts.app title="Platform console" wide>
     <x-ui.page-header title="Platform console" description="Estates, integration health and transaction processing across PowerNest Estate.">
+        <x-ui.button :href="route('platform.logs')" variant="secondary" icon="file-warning">System log</x-ui.button>
         <x-ui.button :href="route('platform.estates.create')" icon="plus">Onboard estate</x-ui.button>
     </x-ui.page-header>
     <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">

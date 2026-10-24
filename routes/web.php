@@ -13,6 +13,7 @@ use App\Http\Controllers\HouseholdController;
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\InspectionController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\LevyLockController;
 use App\Http\Controllers\LostFoundController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\Manage;
@@ -66,11 +67,13 @@ Route::middleware(['auth', 'verified', 'estate'])->group(function () {
         Route::get('/estates/{estate}', [Platform\EstateController::class, 'show'])->name('estates.show');
         Route::put('/estates/{estate}/status', [Platform\EstateController::class, 'status'])->name('estates.status');
         Route::post('/estates/{estate}/invite', [Platform\EstateController::class, 'invite'])->name('estates.invite');
+        Route::get('/logs', Platform\SystemLogController::class)->name('logs');
     });
 });
 
-Route::prefix('app')->middleware(['auth', 'verified', 'estate:required'])->group(function () {
+Route::prefix('app')->middleware(['auth', 'verified', 'estate:required', 'levy'])->group(function () {
     Route::get('/', DashboardController::class)->name('dashboard');
+    Route::get('/locked', LevyLockController::class)->name('levy.locked');
 
     // Household
     Route::get('/home', [HouseholdController::class, 'index'])->name('household.index');
@@ -215,11 +218,26 @@ Route::prefix('app')->middleware(['auth', 'verified', 'estate:required'])->group
             Route::get('/members', [Manage\MemberController::class, 'index'])->name('members.index');
             Route::post('/members/invite', [Manage\MemberController::class, 'invite'])->name('members.invite');
             Route::post('/members/{membership}/status', [Manage\MemberController::class, 'status'])->name('members.status');
+            Route::put('/members/{membership}/role', [Manage\MemberController::class, 'changeRole'])->name('members.role');
             Route::post('/invitations/{invitation}/revoke', [Manage\MemberController::class, 'revokeInvitation'])->name('invitations.revoke');
             Route::post('/requests/{membershipRequest}', [Manage\MemberController::class, 'review'])->name('requests.review');
         });
 
+        Route::middleware('can:roles.manage')->group(function () {
+            Route::get('/roles', [Manage\RoleController::class, 'index'])->name('roles.index');
+            Route::get('/roles/{role}', [Manage\RoleController::class, 'edit'])->name('roles.edit');
+            Route::put('/roles/{role}', [Manage\RoleController::class, 'update'])->name('roles.update');
+            Route::delete('/roles/{role}', [Manage\RoleController::class, 'reset'])->name('roles.reset');
+        });
+
         Route::get('/visits', [Manage\VisitLogController::class, 'index'])->middleware('can:visitors.view_all')->name('visits.index');
+
+        Route::middleware('can:power.vend_manual')->group(function () {
+            Route::get('/office-vend', [Manage\OfficeVendController::class, 'create'])->name('office-vend.create');
+            Route::post('/office-vend', [Manage\OfficeVendController::class, 'store'])->middleware('throttle:power-purchase')->name('office-vend.store');
+            Route::get('/office-vend/{purchase}', [Manage\OfficeVendController::class, 'show'])->name('office-vend.show');
+            Route::post('/office-vend/{purchase}/resend', [Manage\OfficeVendController::class, 'resend'])->middleware('throttle:power-purchase')->name('office-vend.resend');
+        });
 
         Route::middleware('can:power.view_all')->group(function () {
             Route::get('/power', [Manage\PowerOperationsController::class, 'index'])->name('power.index');
@@ -276,6 +294,7 @@ Route::prefix('app')->middleware(['auth', 'verified', 'estate:required'])->group
         });
 
         Route::get('/reports', [Manage\ReportController::class, 'index'])->middleware('can:reports.view')->name('reports.index');
+        Route::get('/reports/download', [Manage\ReportController::class, 'download'])->middleware(['can:reports.view', 'throttle:20,1'])->name('reports.download');
         Route::get('/audit', [Manage\AuditController::class, 'index'])->middleware('can:audit.view')->name('audit.index');
 
         Route::middleware('can:estate.settings')->group(function () {

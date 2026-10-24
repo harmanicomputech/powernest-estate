@@ -1,5 +1,11 @@
 <section class="space-y-6" aria-label="Estate overview">
-    <h2 class="text-lg font-extrabold">Estate overview</h2>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-lg font-extrabold">Estate overview</h2>
+        <div class="flex flex-wrap gap-2">
+            @can('reports.view')<x-ui.button :href="route('manage.reports.index').'#downloads'" variant="secondary" size="sm" icon="download">Reports</x-ui.button>@endcan
+            @can('power.vend_manual')<x-ui.button :href="route('manage.office-vend.create')" size="sm" icon="zap">Issue token</x-ui.button>@endcan
+        </div>
+    </div>
 
     @php
         $alerts = array_filter([

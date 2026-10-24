@@ -79,8 +79,8 @@ class PowerPurchaseFlowTest extends TestCase
 
         $this->assertSame(Status::PendingPayment, $purchase->status);
         $this->assertSame(500_000, $purchase->vend_amount);
-        $this->assertSame(25_000, $purchase->service_charge);
-        $this->assertSame(525_000, $purchase->total_amount);
+        $this->assertSame(35_000, $purchase->service_charge);
+        $this->assertSame(535_000, $purchase->total_amount);
         $this->assertStringStartsWith('PNE-', $purchase->reference);
     }
 
@@ -181,7 +181,7 @@ class PowerPurchaseFlowTest extends TestCase
     public function test_verification_for_a_different_reference_is_ignored(): void
     {
         $purchase = $this->startPurchase();
-        $this->fakePaystack('success', amount: 525_000, reference: 'PNE-SOMETHINGELSE');
+        $this->fakePaystack('success', amount: 535_000, reference: 'PNE-SOMETHINGELSE');
 
         app(PowerPurchaseService::class)->verifyWithGateway($purchase, 'callback');
 

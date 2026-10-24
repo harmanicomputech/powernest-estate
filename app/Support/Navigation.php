@@ -68,7 +68,9 @@ class Navigation
                 $can(P::PropertiesView) ? $item('Properties', 'manage.properties.index', 'building-2', 'manage.properties.*') : null,
                 $can(P::ResidentsView) ? $item('Residents', 'manage.residents.index', 'users', 'manage.residents.*') : null,
                 $can(P::MembersManage) ? $item('Members & access', 'manage.members.index', 'key-round', 'manage.members.*') : null,
+                $can(P::RolesManage) ? $item('Roles & permissions', 'manage.roles.index', 'shield-check', 'manage.roles.*') : null,
                 $can(P::PowerViewAll) ? $item('Power operations', 'manage.power.index', 'plug-zap', 'manage.power.*') : null,
+                $can(P::PowerVendManual) ? $item('Issue token', 'manage.office-vend.create', 'zap', 'manage.office-vend.*') : null,
                 $can(P::BillingManage) ? $item('Billing', 'manage.billing.index', 'landmark', 'manage.billing.*') : null,
                 $can(P::BillingManage) ? $item('Receipts to verify', 'manage.billing.submissions.index', 'file-check', 'manage.billing.submissions.*') : null,
                 $can(P::ExpensesManage) ? $item('Expenses', 'manage.expenses.index', 'wallet', 'manage.expenses.*') : null,
@@ -106,7 +108,8 @@ class Navigation
 
         $can = fn (P $p) => $this->context->can($p);
 
-        if ($can(P::GateOperate) && ! $this->context->isCommunity()) {
+        // Gate staff get the scanner bar; managers (who can also operate the gate) get the office bar below.
+        if ($can(P::GateOperate) && ! $can(P::BillingManage) && ! $can(P::EstateSettings) && ! $this->context->isCommunity()) {
             return array_values(array_filter([
                 ['label' => 'Home', 'route' => 'dashboard', 'icon' => 'layout-dashboard', 'active' => 'dashboard'],
                 ['label' => 'Expected', 'route' => 'gate.expected', 'icon' => 'clock', 'active' => 'gate.expected'],
@@ -128,8 +131,9 @@ class Navigation
         return array_values(array_filter([
             ['label' => 'Home', 'route' => 'dashboard', 'icon' => 'layout-dashboard', 'active' => 'dashboard'],
             $can(P::MaintenanceManage) || $can(P::MaintenanceWork) ? ['label' => 'Work', 'route' => 'maintenance.index', 'icon' => 'hammer', 'active' => 'maintenance.*'] : null,
-            $can(P::TasksWork) ? ['label' => 'Tasks', 'route' => 'tasks.index', 'icon' => 'clipboard-list', 'active' => 'tasks.*'] : null,
+            $can(P::PowerVendManual) ? ['label' => 'Token', 'route' => 'manage.office-vend.create', 'icon' => 'zap', 'active' => 'manage.office-vend.*', 'primary' => true] : null,
             $can(P::BillingManage) ? ['label' => 'Billing', 'route' => 'manage.billing.index', 'icon' => 'landmark', 'active' => 'manage.billing.*'] : null,
+            $can(P::ReportsView) ? ['label' => 'Reports', 'route' => 'manage.reports.index', 'icon' => 'chart-column', 'active' => 'manage.reports.*'] : ($can(P::TasksWork) ? ['label' => 'Tasks', 'route' => 'tasks.index', 'icon' => 'clipboard-list', 'active' => 'tasks.*'] : null),
         ]));
     }
 }

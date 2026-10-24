@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureAccountIsActive;
+use App\Http\Middleware\EnsureLevyPaid;
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\ResolveEstateContext;
 use App\Http\Middleware\SecurityHeaders;
@@ -30,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'estate' => ResolveEstateContext::class,
             'platform' => EnsurePlatformAdmin::class,
+            'levy' => EnsureLevyPaid::class,
         ]);
         // Payment providers call these server-to-server; they are authenticated by signature / re-verification.
         $middleware->validateCsrfTokens(except: ['webhooks/*']);

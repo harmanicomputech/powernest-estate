@@ -27,6 +27,7 @@ use App\Models\StaffTask;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitorPass;
+use App\Services\Billing\LevyLockout;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -83,6 +84,7 @@ class DashboardMetrics
                     default => 'outstanding',
                 },
                 'invoice' => $invoice,
+                'locks_on' => $invoice->status === InvoiceStatus::Paid ? null : app(LevyLockout::class)->locksOn($invoice, $estate),
             ])
             ->values()
             ->all();

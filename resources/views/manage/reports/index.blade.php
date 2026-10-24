@@ -4,6 +4,18 @@
         <x-ui.button type="button" variant="secondary" icon="download" onclick="window.print()">Print</x-ui.button>
     </x-ui.page-header>
 
+    <x-ui.card id="downloads" title="Download a report" description="Excel-friendly CSV or a PDF for any date range." class="mb-8" data-print-hide>
+        <form method="GET" action="{{ route('manage.reports.download') }}" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_auto]" data-no-loading>
+            <x-ui.select name="type" label="Report" :options="\App\Services\Reports\ReportBuilder::TYPES" :value="request('type', 'power')" />
+            <x-ui.input name="from" type="date" label="From" :value="$start->toDateString()" required />
+            <x-ui.input name="to" type="date" label="To" :value="$start->copy()->endOfMonth()->min(now($start->getTimezone()))->toDateString()" required />
+            <div class="flex items-end gap-2">
+                <x-ui.button name="format" value="csv" variant="secondary" icon="file-spreadsheet" class="flex-1">CSV</x-ui.button>
+                <x-ui.button name="format" value="pdf" icon="file-down" class="flex-1">PDF</x-ui.button>
+            </div>
+        </form>
+    </x-ui.card>
+
     <h2 class="mb-3 text-[0.9375rem] font-bold">Estate finances</h2>
     <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <x-ui.stat label="Billed" :value="money($finance['billed'], false)" icon="receipt" />

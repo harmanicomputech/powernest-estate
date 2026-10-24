@@ -39,6 +39,7 @@
                 <div class="min-w-0 flex-1">
                     <p class="font-bold text-ink">{{ $due['name'] }} {{ $due['year'] }} is due</p>
                     <p class="text-sm text-ink-soft">{{ money($invoice->balance()) }} outstanding · pay online or upload your bank receipt.</p>
+                    @if ($due['locks_on'])<p class="mt-0.5 text-xs font-semibold text-warning">App access is paused from {{ $due['locks_on']->format('j M Y') }} if unpaid.</p>@endif
                 </div>
                 <span class="text-sm font-bold text-warning">Pay</span>
             </a>
