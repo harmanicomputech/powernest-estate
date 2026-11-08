@@ -36,6 +36,7 @@
             @endif
             <div class="mt-8">{{ $slot }}</div>
         </div>
+        <p class="pb-2 text-center text-xs text-muted"><a href="/privacy.html" class="hover:text-ink hover:underline">Privacy policy</a></p>
     </main>
 </div>
 </body>

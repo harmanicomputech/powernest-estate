@@ -148,6 +148,7 @@
                     <button class="flex w-full items-center gap-2.5 rounded-xl border border-line px-3 py-3 text-sm font-semibold text-danger"><x-icon name="log-out" class="size-[1.125rem]" />Sign out</button>
                 </form>
             </div>
+            <p class="text-center text-xs text-muted"><a href="/privacy.html" class="hover:text-ink hover:underline">Privacy policy</a></p>
         </div>
     </div>
 </div>
