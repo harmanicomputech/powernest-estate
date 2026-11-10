@@ -53,6 +53,17 @@
                 <p class="text-sm text-muted">Bill everyone for the year from <a href="{{ route('manage.billing.index') }}" class="link">Billing</a> → “Estate management & security levy” → Run.</p>
             </div>
         </x-ui.card>
+        <x-ui.card title="Bank account for estate bills" description="Residents pay service charges and the yearly levy by bank transfer into this account.">
+            <div class="space-y-4">
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <x-ui.input name="bank_name" label="Bank" :value="$estate->setting('billing.bank_name')" placeholder="e.g. GTBank" />
+                    <x-ui.input name="bank_account_number" label="Account number" inputmode="numeric" :value="$estate->setting('billing.bank_account_number')" class="font-mono tnum" />
+                </div>
+                <x-ui.input name="bank_account_name" label="Account name" :value="$estate->setting('billing.bank_account_name')" />
+                <x-ui.input name="bank_note" label="Note for residents" optional :value="$estate->setting('billing.bank_note')" placeholder="e.g. Use your invoice number as the narration" />
+                <x-ui.checkbox name="online_bill_payments" label="Also allow card / online payment for estate bills" description="Off: bills are paid by bank transfer only. Electricity is always paid online." :checked="(bool) $estate->setting('billing.online_payments')" />
+            </div>
+        </x-ui.card>
         <div class="flex items-end lg:col-span-2"><x-ui.button size="lg" icon="check">Save settings</x-ui.button></div>
     </form>
 

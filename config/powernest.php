@@ -49,6 +49,12 @@ return [
         'billing' => [
             'invoice_prefix' => 'INV',
             'reminder_days_before_due' => 3,
+            // Estate bills are paid by bank transfer and verified by the estate office.
+            'online_payments' => false,
+            'bank_name' => null,
+            'bank_account_name' => null,
+            'bank_account_number' => null,
+            'bank_note' => null,
         ],
     ],
 

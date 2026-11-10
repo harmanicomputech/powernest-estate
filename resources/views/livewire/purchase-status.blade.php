@@ -15,7 +15,7 @@
             <div class="relative">
                 <div class="flex items-center gap-2 text-sm font-semibold text-gold-200"><x-icon name="circle-check" class="size-5" />Token generated</div>
                 <p class="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-brand-200/80">Your electricity token</p>
-                <p class="mt-2 break-all font-mono text-[1.65rem] font-bold leading-snug tracking-[0.08em] tnum sm:text-[2rem]">{{ trim(chunk_split($purchase->token->token, 4, ' ')) }}</p>
+                <p class="mt-2 break-words font-mono text-[clamp(1.3rem,6vw,2rem)] font-bold leading-snug tracking-[0.06em] tnum">{{ trim(chunk_split($purchase->token->token, 4, ' ')) }}</p>
                 <div class="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-brand-100/85">
                     @if ($purchase->token->units)<span><span class="font-bold text-white tnum">{{ $purchase->token->units }}</span> {{ $purchase->token->unit_label }}</span>@endif
                     <span>Meter {{ $purchase->meter_number }}</span>
@@ -28,6 +28,7 @@
                     <div x-data="share(@js(['title' => 'Electricity token', 'text' => 'Token for meter '.$purchase->meter_number.': '.trim(chunk_split($purchase->token->token, 4, ' '))]))">
                         <x-ui.button type="button" variant="inverse" class="w-full" icon="share-2" x-on:click="share()"><span x-text="shared ? 'Copied' : 'Share'">Share</span></x-ui.button>
                     </div>
+                    @include('power.partials.whatsapp-token', ['purchase' => $purchase, 'class' => 'col-span-2 sm:col-span-1'])
                 </div>
                 @if ($purchase->token->source === 'demo_seed')
                     <p class="mt-4 text-xs text-brand-200/70">Demo data — this is not a real token.</p>

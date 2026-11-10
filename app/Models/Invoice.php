@@ -83,6 +83,14 @@ class Invoice extends Model
         return in_array($this->status, [InvoiceStatus::Issued, InvoiceStatus::PartiallyPaid], true) && $this->due_date->isPast() && ! $this->due_date->isToday();
     }
 
+    /**
+     * The yearly estate management & security levy (any annual charge).
+     */
+    public function isAnnualLevy(): bool
+    {
+        return $this->chargeType?->frequency === 'annual';
+    }
+
     public function isPayable(): bool
     {
         return in_array($this->status, [InvoiceStatus::Issued, InvoiceStatus::PartiallyPaid], true) && $this->balance() > 0;

@@ -122,7 +122,8 @@ class BillingTest extends TestCase
     public function test_online_invoice_payment_is_verified_server_side_and_idempotent(): void
     {
         $this->enableIntegrations();
-        $estate = $this->estate();
+        // Online card payment for estate bills is optional (off by default: bank transfer only).
+        $estate = $this->estate(['billing' => ['online_payments' => true]]);
         $finance = $this->staff($estate, EstateRole::FinanceOfficer);
         [$resident, $property] = $this->resident($estate);
         $invoice = app(BillingService::class)->issueInvoice($estate, $property, [['description' => 'Service charge', 'quantity' => 1, 'unit_amount' => 4_500_000]], 'Service charge', now()->addWeek(), $finance);

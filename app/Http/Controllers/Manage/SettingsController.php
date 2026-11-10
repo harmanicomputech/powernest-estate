@@ -54,7 +54,12 @@ class SettingsController extends Controller
             'levy_amount' => ['required', 'string', 'max:15'],
             'levy_lockout_enabled' => ['nullable', 'boolean'],
             'levy_grace_days' => ['required', 'integer', 'min:0', 'max:365'],
-        ]);
+            'bank_name' => ['nullable', 'string', 'max:80'],
+            'bank_account_name' => ['nullable', 'string', 'max:120'],
+            'bank_account_number' => ['nullable', 'string', 'regex:/^[0-9 ]{6,20}$/'],
+            'bank_note' => ['nullable', 'string', 'max:200'],
+            'online_bill_payments' => ['nullable', 'boolean'],
+        ], ['bank_account_number.regex' => 'Enter the account number using digits only.']);
 
         $min = Money::parse($data['min_amount']);
         $max = Money::parse($data['max_amount']);
@@ -74,6 +79,11 @@ class SettingsController extends Controller
         $estate->putSetting('levy.amount', Money::parse($data['levy_amount']));
         $estate->putSetting('levy.lockout_enabled', $request->boolean('levy_lockout_enabled'));
         $estate->putSetting('levy.grace_days', (int) $data['levy_grace_days']);
+        $estate->putSetting('billing.bank_name', $data['bank_name'] ?? null);
+        $estate->putSetting('billing.bank_account_name', $data['bank_account_name'] ?? null);
+        $estate->putSetting('billing.bank_account_number', isset($data['bank_account_number']) ? preg_replace('/\s+/', '', $data['bank_account_number']) : null);
+        $estate->putSetting('billing.bank_note', $data['bank_note'] ?? null);
+        $estate->putSetting('billing.online_payments', $request->boolean('online_bill_payments'));
         $estate->save();
 
         // Keep the yearly levy charge in Billing in step with the amount set here.

@@ -6,7 +6,7 @@
 
     <div class="grid gap-6 lg:grid-cols-5">
         <div class="lg:col-span-3">
-            <x-ui.card title="Uploaded receipt" :padded="false" class="overflow-hidden">
+            <x-ui.card :title="$submission->receipt ? 'Uploaded receipt' : 'Payment claim'" :padded="false" class="overflow-hidden">
                 @if ($doc = $submission->receipt)
                     <x-slot:action><x-ui.button :href="route('documents.show', $doc)" target="_blank" size="sm" variant="secondary" icon="external-link">Open</x-ui.button></x-slot:action>
                     <div class="border-t border-line bg-sunken">
@@ -17,7 +17,43 @@
                         @endif
                     </div>
                 @else
-                    <p class="border-t border-line px-6 py-6 text-sm text-muted">No file attached.</p>
+                    <div class="border-t border-line px-6 py-6">
+                        <x-ui.alert tone="warning" title="“I have paid” — no receipt attached">
+                            Check your bank statement for a transfer of <strong>{{ money($submission->amount) }}</strong> on or around <strong>{{ $submission->paid_on->format('j M Y') }}</strong>{{ $submission->payer_reference ? ' (reference / sender: '.$submission->payer_reference.')' : '' }}, and confirm it matches the house below.
+                        </x-ui.alert>
+                    </div>
+                @endif
+            </x-ui.card>
+
+            <x-ui.card title="House information" class="mt-6">
+                @php $property = $submission->property; @endphp
+                <x-ui.dl :items="[
+                    'House' => $property->identifier,
+                    'Type' => $property->type->label().($property->building ? ' · '.$property->building->name : ''),
+                    'Address' => $property->address_line,
+                    'Occupancy' => $property->occupancy_status->label(),
+                    'Outstanding on this house' => money($houseBalance),
+                ]" />
+                <p class="eyebrow mb-2 mt-5">People in this house</p>
+                @forelse ($occupants as $occupancy)
+                    <div class="flex items-center gap-3 border-t border-line py-2.5 text-sm">
+                        <x-ui.avatar :user="$occupancy->user" />
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate font-semibold">{{ $occupancy->user->name }} @if ($occupancy->user_id === $submission->submitted_by)<x-ui.badge tone="info">Submitted this</x-ui.badge>@endif</p>
+                            <p class="truncate text-muted">{{ $occupancy->relationship->label() }}{{ $occupancy->is_primary ? ' · main occupant' : '' }} · {{ $occupancy->user->phone ?: $occupancy->user->email }}</p>
+                        </div>
+                    </div>
+                @empty
+                    <p class="text-sm text-muted">No one is linked to this house.</p>
+                @endforelse
+                @if ($levyHistory->isNotEmpty())
+                    <p class="eyebrow mb-2 mt-5">Yearly levy history</p>
+                    @foreach ($levyHistory as $levy)
+                        <a href="{{ route('bills.show', $levy) }}" class="flex items-center justify-between gap-3 border-t border-line py-2.5 text-sm hover:bg-canvas">
+                            <span><span class="font-semibold">{{ $levy->period_start?->format('Y') }}</span> <span class="text-muted">· {{ $levy->number }} · {{ money($levy->total) }}</span></span>
+                            <x-ui.status :value="$levy->status" />
+                        </a>
+                    @endforeach
                 @endif
             </x-ui.card>
         </div>

@@ -10,7 +10,7 @@
         @if ($purchase->token)
             <div class="rounded-[var(--radius-card)] bg-brand-900 p-6 text-white print:border print:border-black print:bg-white print:text-black">
                 <p class="text-xs font-semibold uppercase tracking-[0.16em] text-brand-200/80 print:text-black">Electricity token</p>
-                <p class="mt-2 break-all font-mono text-[1.65rem] font-bold leading-snug tracking-[0.08em] tnum sm:text-[2rem]">{{ trim(chunk_split($purchase->token->token, 4, ' ')) }}</p>
+                <p class="mt-2 break-words font-mono text-[clamp(1.3rem,6vw,2rem)] font-bold leading-snug tracking-[0.06em] tnum">{{ trim(chunk_split($purchase->token->token, 4, ' ')) }}</p>
                 <p class="mt-3 text-sm text-brand-100/80 print:text-black">{{ $purchase->token->units ? $purchase->token->units.' '.$purchase->token->unit_label.' · ' : '' }}Meter {{ $purchase->meter_number }}</p>
             </div>
         @else
@@ -30,6 +30,7 @@
         </x-ui.card>
 
         @if ($purchase->token)
+            <div data-print-hide>@include('power.partials.whatsapp-token', ['purchase' => $purchase, 'class' => 'w-full'])</div>
             <form method="POST" action="{{ route('manage.office-vend.resend', $purchase) }}" data-print-hide>@csrf
                 <x-ui.button variant="secondary" icon="mail" class="w-full">Email the token again</x-ui.button>
             </form>

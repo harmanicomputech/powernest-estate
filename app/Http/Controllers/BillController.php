@@ -48,14 +48,21 @@ class BillController extends Controller
         Gate::authorize('view', $invoice);
 
         return view('bills.show', [
-            'invoice' => $invoice->load('items', 'property', 'billedUser', 'allocations.payment', 'adjustments', 'submissions.reviewer'),
-            'gateways' => Gate::allows('pay', $invoice) ? $gateways->availableFor($invoice->estate) : [],
+            'invoice' => $invoice->load('items', 'property', 'billedUser', 'chargeType', 'allocations.payment', 'adjustments', 'submissions.reviewer'),
+            'gateways' => Gate::allows('pay', $invoice) && $invoice->estate->setting('billing.online_payments') ? $gateways->availableFor($invoice->estate) : [],
+            'bank' => [
+                'name' => $invoice->estate->setting('billing.bank_name'),
+                'account_name' => $invoice->estate->setting('billing.bank_account_name'),
+                'account_number' => $invoice->estate->setting('billing.bank_account_number'),
+                'note' => $invoice->estate->setting('billing.bank_note'),
+            ],
         ]);
     }
 
     public function pay(Invoice $invoice, Request $request, BillingPaymentService $payments): RedirectResponse|View
     {
         Gate::authorize('pay', $invoice);
+        abort_unless($invoice->estate->setting('billing.online_payments'), 404, 'Estate bills are paid by bank transfer.');
         $data = $request->validate(['gateway' => ['required', 'in:payaza,paystack']]);
 
         try {
@@ -79,8 +86,10 @@ class BillController extends Controller
             'payer_reference' => ['nullable', 'string', 'max:100'],
             'paid_on' => ['required', 'date', 'before_or_equal:today'],
             'note' => ['nullable', 'string', 'max:500'],
-            'receipt' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:8192'],
-        ], ['receipt.required' => 'Attach a photo or PDF of your receipt.']);
+            // Service charges need the bank receipt; for the yearly levy an "I have paid" claim is enough,
+            // because the estate office checks it against the bank statement and the house's records.
+            'receipt' => [$invoice->isAnnualLevy() ? 'nullable' : 'required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:8192'],
+        ], ['receipt.required' => 'Attach a photo or PDF of your bank transfer receipt.']);
 
         try {
             $data['amount'] = Money::parse($data['amount']);
@@ -90,7 +99,9 @@ class BillController extends Controller
 
         $submission = $submissions->submit($request->user(), $invoice, $data, $request->file('receipt'));
 
-        return back()->with('success', "Receipt {$submission->reference} uploaded. The estate office will verify it and you'll be notified.");
+        return back()->with('success', $submission->receipt
+            ? "Receipt {$submission->reference} uploaded. The estate office will verify it and you'll be notified."
+            : "Thanks — the estate office will confirm your payment ({$submission->reference}) and you'll be notified.");
     }
 
     public function paymentReturn(Payment $payment, BillingPaymentService $payments): RedirectResponse

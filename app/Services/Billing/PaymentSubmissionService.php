@@ -38,7 +38,7 @@ class PaymentSubmissionService
     /**
      * @param  array{amount: int, method: string, payer_reference?: ?string, paid_on: string, note?: ?string}  $data
      */
-    public function submit(User $user, Invoice $invoice, array $data, UploadedFile $receipt): PaymentSubmission
+    public function submit(User $user, Invoice $invoice, array $data, ?UploadedFile $receipt): PaymentSubmission
     {
         abort_unless(Gate::forUser($user)->allows('pay', $invoice), 403);
 
@@ -68,7 +68,9 @@ class PaymentSubmissionService
                 'note' => $data['note'] ?? null,
             ]);
 
-            $this->documents->store($submission, $receipt, $user, 'payment_receipt');
+            if ($receipt) {
+                $this->documents->store($submission, $receipt, $user, 'payment_receipt');
+            }
             $this->audit->record('payment_submission.created', $submission, ['invoice' => $invoice->number, 'amount' => $data['amount']], $invoice->estate_id, $user);
 
             return $submission;

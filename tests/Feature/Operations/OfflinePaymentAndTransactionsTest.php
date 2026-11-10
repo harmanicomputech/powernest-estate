@@ -105,7 +105,7 @@ class OfflinePaymentAndTransactionsTest extends TestCase
         $this->assertSame(InvoiceStatus::Issued, $this->levy->fresh()->status);
         Notification::assertSentTo($this->resident, PaymentSubmissionReviewed::class, fn ($n) => str_contains($n->toArray($this->resident)['body'], 'Not on statement'));
 
-        $this->inEstate($this->resident, $this->estateModel)->get(route('bills.show', $this->levy))->assertSee('Not on statement')->assertSee('Paid offline?');
+        $this->inEstate($this->resident, $this->estateModel)->get(route('bills.show', $this->levy))->assertSee('Not on statement')->assertSee('I have paid');
         $this->upload($this->resident)->assertSessionHasNoErrors();
         $this->assertSame(2, PaymentSubmission::count());
     }

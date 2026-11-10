@@ -13,12 +13,14 @@ class PaymentSubmissionReceived extends AppNotification
 
     protected function title(): string
     {
-        return 'Payment receipt to verify';
+        return $this->submission->receipt ? 'Payment receipt to verify' : 'Payment to confirm';
     }
 
     protected function body(): string
     {
-        return "{$this->submission->submitter->name} uploaded a ".Money::format($this->submission->amount)." receipt for {$this->submission->invoice->number} ({$this->submission->property->identifier}).";
+        $what = $this->submission->receipt ? 'uploaded a '.Money::format($this->submission->amount).' receipt' : 'says they paid '.Money::format($this->submission->amount).' by bank transfer';
+
+        return "{$this->submission->submitter->name} {$what} for {$this->submission->invoice->number} ({$this->submission->property->identifier}).";
     }
 
     protected function url(): ?string

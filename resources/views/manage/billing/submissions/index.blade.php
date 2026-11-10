@@ -1,5 +1,5 @@
 <x-layouts.app title="Receipts to verify">
-    <x-ui.page-header title="Receipts to verify" description="Offline payments uploaded by residents. Check each against the bank statement or cash book before approving." :back="route('manage.billing.index')" />
+    <x-ui.page-header title="Receipts to verify" description="Bank transfer receipts and “I have paid” claims from residents. Check each against the bank statement and the house before approving." :back="route('manage.billing.index')" />
     <x-ui.tabs :active="$status->value" :tabs="collect(\App\Enums\SubmissionStatus::cases())->mapWithKeys(fn ($s) => [$s->value => [$s === \App\Enums\SubmissionStatus::Pending ? 'Awaiting review' : $s->label(), route('manage.billing.submissions.index', ['status' => $s->value]), $counts[$s->value] ?? 0]])->all()" />
     <x-ui.card :padded="false">
         @forelse ($submissions as $submission)
@@ -12,6 +12,7 @@
                 </div>
                 <div class="text-right">
                     <p class="font-bold tnum">{{ money($submission->amount) }}</p>
+                    @unless ($submission->receipt)<x-ui.badge tone="warning">I have paid</x-ui.badge>@endunless
                     <p class="text-xs text-muted">{{ $submission->created_at->diffForHumans() }}</p>
                 </div>
                 <x-icon name="chevron-right" class="size-4 text-faint" />

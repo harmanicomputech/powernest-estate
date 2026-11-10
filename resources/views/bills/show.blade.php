@@ -58,52 +58,102 @@
                 $pendingSubmission = $invoice->submissions->first(fn ($s) => $s->status === \App\Enums\SubmissionStatus::Pending);
                 $canPay = auth()->user()->can('pay', $invoice);
             @endphp
-            @if ($invoice->isPayable() && $gateways && ! $pendingSubmission)
-                <x-ui.card title="Pay online">
-                    <form method="POST" action="{{ route('bills.pay', $invoice) }}" class="space-y-3" x-data="submitting" x-on:submit="submit">
-                        @csrf
-                        @foreach ($gateways as $key => $gateway)
-                            <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-line-strong p-3.5 has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/60">
-                                <input type="radio" name="gateway" value="{{ $key }}" class="accent-brand-700" @checked($loop->first)>
-                                <span class="text-sm font-semibold">{{ $gateway->label() }}</span>
-                            </label>
-                        @endforeach
-                        <x-ui.button class="w-full" size="lg" icon="lock" busy>Pay {{ money($invoice->balance()) }}</x-ui.button>
-                    </form>
-                </x-ui.card>
-            @elseif ($invoice->status === \App\Enums\InvoiceStatus::Paid)
+            @if ($invoice->status === \App\Enums\InvoiceStatus::Paid)
                 <x-ui.alert tone="success" title="Paid in full">Thank you. Receipts are listed under Payments.</x-ui.alert>
             @elseif ($invoice->status === \App\Enums\InvoiceStatus::Void)
                 <x-ui.alert tone="info" title="Voided">{{ $invoice->void_reason }}</x-ui.alert>
             @endif
 
             @if ($pendingSubmission)
-                <x-ui.alert tone="info" title="Receipt under review" icon="file-check">
-                    You uploaded a {{ money($pendingSubmission->amount) }} {{ strtolower(\App\Models\PaymentSubmission::METHODS[$pendingSubmission->method] ?? $pendingSubmission->method) }} receipt on {{ local_time($pendingSubmission->created_at, 'j M') }}. The estate office will verify it against their records and you'll be notified.
+                <x-ui.alert tone="info" :title="$pendingSubmission->receipt ? 'Receipt under review' : 'Payment being confirmed'" icon="file-check">
+                    @if ($pendingSubmission->receipt)
+                        You uploaded a {{ money($pendingSubmission->amount) }} bank transfer receipt on {{ local_time($pendingSubmission->created_at, 'j M') }}.
+                    @else
+                        You told us you paid {{ money($pendingSubmission->amount) }} on {{ $pendingSubmission->paid_on->format('j M') }}.
+                    @endif
+                    The estate office will check it against their bank records and your house details, and you'll be notified.
                 </x-ui.alert>
             @elseif ($invoice->isPayable() && $canPay)
-                <x-ui.card title="Paid offline?" description="Upload your bank transfer, POS or cash receipt. The estate office verifies it before the invoice is marked paid.">
-                    <form method="POST" action="{{ route('bills.receipts.store', $invoice) }}" enctype="multipart/form-data" class="space-y-4" x-data="{ file: null }" x-on:submit="$el.querySelector('[type=submit]').disabled = true">
-                        @csrf
-                        <div class="grid grid-cols-2 gap-3">
-                            <x-ui.input name="amount" label="Amount paid" prefix="₦" inputmode="decimal" :value="\App\Support\Money::toDecimalString($invoice->balance())" required />
-                            <x-ui.input name="paid_on" type="date" label="Date paid" :value="now()->toDateString()" :max="now()->toDateString()" required />
+                <x-ui.card title="Pay by bank transfer" :description="$invoice->isAnnualLevy() ? 'Transfer the amount, then tap “I have paid”. The estate office confirms it against your house record.' : 'Transfer the amount, then upload your transfer receipt for the estate office to verify.'">
+                    @if ($bank['account_number'])
+                        <div class="space-y-2 rounded-xl bg-canvas p-4 text-sm">
+                            <div class="flex justify-between gap-3"><span class="text-muted">Bank</span><span class="text-right font-semibold">{{ $bank['name'] }}</span></div>
+                            <div class="flex justify-between gap-3"><span class="text-muted">Account name</span><span class="text-right font-semibold">{{ $bank['account_name'] }}</span></div>
+                            <div class="flex items-center justify-between gap-3" x-data="clipboard(@js($bank['account_number']))">
+                                <span class="text-muted">Account number</span>
+                                <button type="button" x-on:click="copy()" class="inline-flex items-center gap-1.5 font-mono text-base font-bold tracking-wide tnum">{{ $bank['account_number'] }} <x-icon name="copy" class="size-4 text-brand-600" /><span x-show="copied" x-cloak class="font-sans text-xs text-brand-700">Copied</span></button>
+                            </div>
+                            <div class="flex items-center justify-between gap-3" x-data="clipboard(@js($invoice->number))">
+                                <span class="text-muted">Narration / reference</span>
+                                <button type="button" x-on:click="copy()" class="inline-flex items-center gap-1.5 font-semibold">{{ $invoice->number }} <x-icon name="copy" class="size-4 text-brand-600" /></button>
+                            </div>
+                            <div class="flex justify-between gap-3 border-t border-line pt-2"><span class="text-muted">Amount</span><span class="font-extrabold tnum">{{ money($invoice->balance()) }}</span></div>
                         </div>
-                        <x-ui.select name="method" label="How did you pay?" :options="\App\Models\PaymentSubmission::METHODS" value="bank_transfer" />
-                        <x-ui.input name="payer_reference" label="Transaction / teller reference" optional placeholder="e.g. session ID or teller number" />
-                        <div>
-                            <p class="mb-1.5 text-[0.8125rem] font-semibold text-ink-soft">Receipt</p>
-                            <label class="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-line-strong px-4 py-5 text-center text-sm text-muted transition hover:border-brand-500">
-                                <x-icon name="file-check" class="size-6" />
-                                <span x-text="file ?? 'Tap to take a photo or choose a PDF'"></span>
-                                <input type="file" name="receipt" accept="image/*,application/pdf" class="sr-only" required x-on:change="file = $event.target.files[0]?.name">
-                            </label>
-                            @error('receipt')<p class="mt-1.5 text-[0.8125rem] font-medium text-danger">{{ $message }}</p>@enderror
+                        @if ($bank['note'])<p class="mt-2 text-xs text-muted">{{ $bank['note'] }}</p>@endif
+                    @else
+                        <x-ui.alert tone="warning">Ask the estate office for the bank account to pay into.</x-ui.alert>
+                    @endif
+
+                    @if ($invoice->isAnnualLevy())
+                        <div x-data="{ open: {{ $errors->any() ? 'true' : 'false' }} }" class="mt-5">
+                            <x-ui.button type="button" size="lg" class="w-full" icon="badge-check" x-show="!open" x-on:click="open = true">I have paid</x-ui.button>
+                            <form method="POST" action="{{ route('bills.receipts.store', $invoice) }}" enctype="multipart/form-data" class="space-y-4" x-show="open" x-cloak x-data="{ file: null }">
+                                @csrf
+                                <input type="hidden" name="method" value="bank_transfer">
+                                <p class="text-sm font-semibold">Confirm your payment for {{ $invoice->property->identifier }}</p>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <x-ui.input name="amount" label="Amount paid" prefix="₦" inputmode="decimal" :value="\App\Support\Money::toDecimalString($invoice->balance())" required />
+                                    <x-ui.input name="paid_on" type="date" label="Date paid" :value="now()->toDateString()" :max="now()->toDateString()" required />
+                                </div>
+                                <x-ui.input name="payer_reference" label="Transfer reference or sender name" optional placeholder="Helps the office find it on the statement" />
+                                <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-line-strong px-4 py-3 text-sm text-muted transition hover:border-brand-500">
+                                    <x-icon name="paperclip" class="size-5 shrink-0" />
+                                    <span class="flex-1" x-text="file ?? 'Attach transfer receipt (optional)'"></span>
+                                    <input type="file" name="receipt" accept="image/*,application/pdf" class="sr-only" x-on:change="file = $event.target.files[0]?.name">
+                                </label>
+                                @error('receipt')<p class="text-[0.8125rem] font-medium text-danger">{{ $message }}</p>@enderror
+                                <x-ui.button class="w-full" size="lg" icon="badge-check">Send for confirmation</x-ui.button>
+                                <button type="button" x-on:click="open = false" class="w-full text-sm font-semibold text-muted">Cancel</button>
+                            </form>
                         </div>
-                        <x-ui.textarea name="note" label="Note" rows="2" optional />
-                        <x-ui.button type="submit" variant="secondary" class="w-full" icon="file-check">Submit for verification</x-ui.button>
-                    </form>
+                    @else
+                        <form method="POST" action="{{ route('bills.receipts.store', $invoice) }}" enctype="multipart/form-data" class="mt-5 space-y-4" x-data="{ file: null }">
+                            @csrf
+                            <input type="hidden" name="method" value="bank_transfer">
+                            <div class="grid grid-cols-2 gap-3">
+                                <x-ui.input name="amount" label="Amount transferred" prefix="₦" inputmode="decimal" :value="\App\Support\Money::toDecimalString($invoice->balance())" required />
+                                <x-ui.input name="paid_on" type="date" label="Date paid" :value="now()->toDateString()" :max="now()->toDateString()" required />
+                            </div>
+                            <x-ui.input name="payer_reference" label="Transfer reference" optional placeholder="e.g. session ID" />
+                            <div>
+                                <p class="mb-1.5 text-[0.8125rem] font-semibold text-ink-soft">Transfer receipt</p>
+                                <label class="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-line-strong px-4 py-5 text-center text-sm text-muted transition hover:border-brand-500">
+                                    <x-icon name="file-check" class="size-6" />
+                                    <span x-text="file ?? 'Tap to take a photo or choose a PDF'"></span>
+                                    <input type="file" name="receipt" accept="image/*,application/pdf" class="sr-only" required x-on:change="file = $event.target.files[0]?.name">
+                                </label>
+                                @error('receipt')<p class="mt-1.5 text-[0.8125rem] font-medium text-danger">{{ $message }}</p>@enderror
+                            </div>
+                            <x-ui.textarea name="note" label="Note" rows="2" optional />
+                            <x-ui.button class="w-full" size="lg" icon="file-check">Upload receipt for verification</x-ui.button>
+                        </form>
+                    @endif
                 </x-ui.card>
+
+                @if ($gateways)
+                    <x-ui.card title="Or pay online">
+                        <form method="POST" action="{{ route('bills.pay', $invoice) }}" class="space-y-3">
+                            @csrf
+                            @foreach ($gateways as $key => $gateway)
+                                <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-line-strong p-3.5 has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/60">
+                                    <input type="radio" name="gateway" value="{{ $key }}" class="accent-brand-700" @checked($loop->first)>
+                                    <span class="text-sm font-semibold">{{ $gateway->label() }}</span>
+                                </label>
+                            @endforeach
+                            <x-ui.button variant="secondary" class="w-full" icon="lock">Pay {{ money($invoice->balance()) }}</x-ui.button>
+                        </form>
+                    </x-ui.card>
+                @endif
             @endif
 
             @php $pastSubmissions = $invoice->submissions->where('status', '!=', \App\Enums\SubmissionStatus::Pending); @endphp

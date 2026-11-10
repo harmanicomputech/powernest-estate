@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Manage;
 
+use App\Enums\InvoiceStatus;
 use App\Enums\SubmissionStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Invoice;
 use App\Models\PaymentSubmission;
 use App\Services\Billing\PaymentSubmissionService;
 use App\Support\EstateContext;
@@ -24,7 +26,7 @@ class PaymentSubmissionController extends Controller
         $status = SubmissionStatus::tryFrom((string) $request->query('status')) ?? SubmissionStatus::Pending;
 
         return view('manage.billing.submissions.index', [
-            'submissions' => PaymentSubmission::forEstate($estate)->with('invoice', 'property', 'submitter', 'reviewer')
+            'submissions' => PaymentSubmission::forEstate($estate)->with('invoice', 'property', 'submitter', 'reviewer', 'receipt')
                 ->where('status', $status->value)
                 ->when($status === SubmissionStatus::Pending, fn ($q) => $q->oldest(), fn ($q) => $q->latest('reviewed_at'))
                 ->paginate(25)->withQueryString(),
@@ -36,8 +38,14 @@ class PaymentSubmissionController extends Controller
     public function show(PaymentSubmission $submission): View
     {
         return view('manage.billing.submissions.show', [
-            'submission' => $submission->load('invoice.items', 'invoice.allocations.payment', 'property', 'submitter', 'reviewer', 'receipt', 'payment'),
+            'submission' => $submission->load('invoice.items', 'invoice.chargeType', 'invoice.allocations.payment', 'property.building', 'submitter', 'reviewer', 'receipt', 'payment'),
             'history' => PaymentSubmission::where('invoice_id', $submission->invoice_id)->whereKeyNot($submission->id)->with('reviewer')->latest()->get(),
+            // House information so the office can confirm the payment against the right home.
+            'occupants' => $submission->property->occupancies()->where('status', 'active')->with('user')->orderByDesc('is_primary')->get(),
+            'levyHistory' => Invoice::where('property_id', $submission->property_id)
+                ->whereHas('chargeType', fn ($query) => $query->where('frequency', 'annual'))
+                ->where('status', '!=', InvoiceStatus::Void->value)->orderByDesc('period_start')->limit(6)->get(),
+            'houseBalance' => (int) Invoice::where('property_id', $submission->property_id)->outstanding()->get()->sum(fn (Invoice $invoice) => $invoice->balance()),
         ]);
     }
 
